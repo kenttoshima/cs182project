@@ -19,11 +19,11 @@ class Grid(object):
         for ridx, row in enumerate(self.grid):
             for cidx, cell in enumerate(row):
                 if cell != 0 and active_list[cidx] == 0:
-                    active_list[cidx] = ridx
+                    active_list[cidx] = self.height - ridx
         return active_list
 
-    def add_shape(self, shape, col):
-        if col < 0 and self.width <= col:
+    def collision(self, shape, col):
+        if col < 0 or self.width <= col:
             raise ValueError("Invalid column number")
         height_list = [0 for i in range(self.width)]
         for cidx in range(len(shape.aslist()[0])):
@@ -31,12 +31,22 @@ class Grid(object):
                 if row[cidx] != 0:
                     height_list[cidx] = self.active_y()[cidx] - ridx
         return height_list
-
-
-
     
-    def remove_row(self, parameter_list):
-        pass
+    def add_shape(self, shape, x, y):
+        idx_r, idx_c = self.height - y, x
+        for off_y, row in enumerate(shape.aslist()):
+            for off_x, cell in enumerate(row):
+                try:
+                    self.grid[off_y + idx_r][off_x + idx_c] += cell
+                except IndexError, e:
+                    print "Grid error: " + str(e)
+    
+    def remove_row(self, height):
+        if 0 not in self.grid[self.height - height]:
+            del self.grid[self.height - height]
+            self.grid.insert(0, [0 for i in range(self.width)])
+        else:
+            raise ValueError("Row not filled")
 
 class Shape(object):
     def __init__(self, type):
