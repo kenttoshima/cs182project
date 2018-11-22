@@ -38,7 +38,7 @@ class Grid(object):
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
                 try:
-                    self.grid[off_y + idx_r][off_x + idx_c] += cell
+                    self.grid[off_y + idx_r - len(shape.aslist())][off_x + idx_c] += cell
                 except IndexError, e:
                     print "Grid error: " + str(e)
     
@@ -103,6 +103,31 @@ class Configuration(Grid):
     def fall(self, shape, x):
         if x < 1 or x + self.width < len(shape.aslist()[0]):
             # TODO raise error that object does not fit in the x axis
+            pass        
         idx_c = self.cord(x = x)[1]
+        height_list = self.active_y()[idx_c:idx_c + len(shape.aslist()[0])]
+        for off_y, row in enumerate(shape.aslist()):
+            for off_x, cell in enumerate(row):
+                if not off_y > len(shape.aslist()) / 2 and cell == 0:
+                    height_list[off_x] -= 1
+        self.add_shape(shape, x, max(height_list))
 
-        
+if __name__ == '__main__':
+    tetris = Configuration(6, 10)
+    s = []
+    s.append(Shape(0))
+    s.append(Shape(1))
+    s.append(Shape(2))
+    s.append(Shape(3))
+    s.append(Shape(4))
+    s.append(Shape(5))
+    s[2].rotate()
+    s[4].rotate()
+    s[0].rotate()
+    tetris.fall(s[0], 1)
+    tetris.fall(s[1], 2)
+    tetris.fall(s[2], 4)
+    tetris.fall(s[3], 3)
+    tetris.fall(s[4], 2)
+    tetris.fall(s[5], 4)
+    print tetris
