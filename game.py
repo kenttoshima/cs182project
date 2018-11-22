@@ -13,7 +13,17 @@ class Grid(object):
                 string += " " + str(cell)
             string += "\n"
         return string
-    
+
+    # return (row, column) on given (x, y) coordinate
+    def cord(self, x = 0, y = 0):
+        return self.height - y, x - 1
+
+    # return the value of the cell at (x, y)
+    def cell(self, x, y):
+        row, column = self.cord(x, y)
+        return self.grid[row][column]
+
+    # return list of active height for each column
     def active_y(self):
         active_list = [0 for i in range(self.width)]
         for ridx, row in enumerate(self.grid):
@@ -21,19 +31,10 @@ class Grid(object):
                 if cell != 0 and active_list[cidx] == 0:
                     active_list[cidx] = self.height - ridx
         return active_list
-
-    def collision(self, shape, col):
-        if col < 0 or self.width <= col:
-            raise ValueError("Invalid column number")
-        height_list = [0 for i in range(self.width)]
-        for cidx in range(len(shape.aslist()[0])):
-            for ridx, row in enumerate(shape.aslist()):
-                if row[cidx] != 0:
-                    height_list[cidx] = self.active_y()[cidx] - ridx
-        return height_list
     
+    # add given shape to given coordinate on left-up point
     def add_shape(self, shape, x, y):
-        idx_r, idx_c = self.height - y, x
+        idx_r, idx_c = self.cord(x, y)
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
                 try:
@@ -41,14 +42,17 @@ class Grid(object):
                 except IndexError, e:
                     print "Grid error: " + str(e)
     
-    def remove_row(self, height):
-        if 0 not in self.grid[self.height - height]:
-            del self.grid[self.height - height]
+    
+    # remove row of given y if the row is filled
+    def remove_row(self, y):
+        row = self.grid[self.cord(y = y)[0]]
+        if 0 not in row:
+            del row
             self.grid.insert(0, [0 for i in range(self.width)])
         else:
             raise ValueError("Row not filled")
 
-class Shape(object):
+class Shape:
     def __init__(self, type):
         self.type = type
         self.shape_types = [
@@ -89,3 +93,16 @@ class Shape(object):
         self.shape = [ [ self.shape[y][x]
 			            for y in range(len(self.shape)) ]
 		                for x in range(len(self.shape[0]) - 1, -1, -1) ]
+
+class Configuration(Grid):
+    def __init__(self, width, height):
+        super(Configuration, self).__init__(width, height)
+        self.score = 0
+        self.turn = 0
+
+    def fall(self, shape, x):
+        if x < 1 or x + self.width < len(shape.aslist()[0]):
+            # TODO raise error that object does not fit in the x axis
+        idx_c = self.cord(x = x)[1]
+
+        
