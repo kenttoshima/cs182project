@@ -32,16 +32,15 @@ class Grid(object):
                     active_list[cidx] = self.height - ridx
         return active_list
     
-    # add given shape to given coordinate on left-up point
+    # add given shape to given coordinate on down_left point
     def add_shape(self, shape, x, y):
         idx_r, idx_c = self.cord(x, y)
+        if y - 1 + shape.height > self.height or x - 1 + shape.width > self.width:
+            raise ValueError
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
-                try:
-                    self.grid[off_y + idx_r - len(shape.aslist())][off_x + idx_c] += cell
-                except IndexError, e:
-                    print "Grid error: " + str(e)
-    
+                self.grid[off_y + idx_r - len(shape.aslist()) + 1][off_x + idx_c] += cell
+                print self.__str__()
     
     # remove row of given y if the row is filled
     def remove_row(self, y):
@@ -77,6 +76,8 @@ class Shape:
         [7, 7]]
         ]
         self.shape = self.shape_types[type]
+        self.height = len(self.shape)
+        self.width = len(self.shape[0])
     
     def __str__(self):
         string = ""
@@ -93,41 +94,28 @@ class Shape:
         self.shape = [ [ self.shape[y][x]
 			            for y in range(len(self.shape)) ]
 		                for x in range(len(self.shape[0]) - 1, -1, -1) ]
+        self.height = len(self.shape)
+        self.width = len(self.shape[0])
 
 class Configuration(Grid):
     def __init__(self, width, height):
         super(Configuration, self).__init__(width, height)
-        self.score = 0
-        self.turn = 0
 
     def fall(self, shape, x):
         if x < 1 or x + self.width < len(shape.aslist()[0]):
             # TODO raise error that object does not fit in the x axis
-            pass        
+            raise IndexError        
         idx_c = self.cord(x = x)[1]
         height_list = self.active_y()[idx_c:idx_c + len(shape.aslist()[0])]
-        for off_y, row in enumerate(shape.aslist()):
+        fallingOffset = [True for i in range(len(height_list))]
+        for row in shape.aslist()[::-1]:
             for off_x, cell in enumerate(row):
-                if not off_y > len(shape.aslist()) / 2 and cell == 0:
+                if cell == 0 and fallingOffset[off_x]:
                     height_list[off_x] -= 1
-        self.add_shape(shape, x, max(height_list))
-
-if __name__ == '__main__':
-    tetris = Configuration(6, 10)
-    s = []
-    s.append(Shape(0))
-    s.append(Shape(1))
-    s.append(Shape(2))
-    s.append(Shape(3))
-    s.append(Shape(4))
-    s.append(Shape(5))
-    s[2].rotate()
-    s[4].rotate()
-    s[0].rotate()
-    tetris.fall(s[0], 1)
-    tetris.fall(s[1], 2)
-    tetris.fall(s[2], 4)
-    tetris.fall(s[3], 3)
-    tetris.fall(s[4], 2)
-    tetris.fall(s[5], 4)
-    print tetris
+                else:
+                    fallingOffset[off_x] = False
+        try:
+            print height_list
+            self.add_shape(shape, x, max(height_list) + 1)
+        except ValueError as g:
+            print g
