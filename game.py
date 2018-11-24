@@ -103,7 +103,7 @@ class Shapes(Shape):
     
     def generate(self, turn = 0):
         if self.infinite:
-            self.shape_list.append(choice(self.shape_types)
+            self.shape_list.append(choice(self.shape_types))
         return self.shape_list[turn]
 
 class Configuration(Grid):
