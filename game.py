@@ -101,10 +101,13 @@ class Shapes(Shape):
         self.infinite = infinite
         self.shape_list = map(lambda x: super(Shapes, self).__init__(type), type_list)
     
-    def generate(self, turn = 0):
+    def generate(self, turn):
         if self.infinite:
             self.shape_list.append(choice(self.shape_types))
-        return self.shape_list[turn]
+        if turn > len(self.shape_list):
+            raise ValueError
+        else:
+            return self.shape_list[turn]
 
 class Configuration(Grid):
     def __init__(self, width, height):
@@ -128,5 +131,22 @@ class Configuration(Grid):
         except ValueError as g:
             print g
 
-class Tetris(Configuration):
-    pass
+class Tetris(Configuration, Shapes):
+    def __init__(self, width, height, infinite, type_list):
+        # super(Tetris, self).__init__(infinite, type_list)
+        super(Tetris, self).__init__(width, height)
+        self.turn = 0
+        self.score = 0
+
+    def run(self):
+        self.turn += 1
+        shape = self.generate(self.turn)
+        print self.grid
+        print shape
+        x = input("input x coordinate")
+        self.fall(shape, x)
+        for i in range(len(self.grid)):
+            try:
+                self.remove_row(i + 1)
+            except ValueError:
+                pass
