@@ -40,7 +40,6 @@ class Grid(object):
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
                 self.grid[off_y + idx_r - len(shape.aslist()) + 1][off_x + idx_c] += cell
-                print self.__str__()
     
     # remove row of given y if the row is filled
     def remove_row(self, y):
@@ -97,6 +96,16 @@ class Shape:
         self.height = len(self.shape)
         self.width = len(self.shape[0])
 
+class Shapes(Shape):
+    def __init__(self, infinite = True, type_list = []):
+        self.infinite = infinite
+        self.shape_list = map(lambda x: super(Shapes, self).__init__(type), type_list)
+    
+    def generate(self, turn = 0):
+        if self.infinite:
+            self.shape_list.append(choice(self.shape_types)
+        return self.shape_list[turn]
+
 class Configuration(Grid):
     def __init__(self, width, height):
         super(Configuration, self).__init__(width, height)
@@ -115,7 +124,9 @@ class Configuration(Grid):
                 else:
                     fallingOffset[off_x] = False
         try:
-            print height_list
             self.add_shape(shape, x, max(height_list) + 1)
         except ValueError as g:
             print g
+
+class Tetris(Configuration):
+    pass
