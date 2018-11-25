@@ -166,6 +166,11 @@ class Tetris(Configuration, Shapes):
         shape = self.generate(self.turn)
         print shape
         print self
+        r = input("input rotation number: ") % 4
+        for i in range(r):
+            shape.rotate()
+        print shape
+        print self
         x = input("input x coordinate: ")
         self.fall(shape, x)
         print self
