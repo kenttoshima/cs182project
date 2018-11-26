@@ -9,10 +9,10 @@ class Grid(object):
     def __str__(self):
         string = "+ " + "- " * len(self.grid[0]) + "+\n"
         for row in self.grid:
-            string += " "
+            string += "|"
             for cell in row:
                 string += " " + str(cell if cell else " ")
-            string += "\n"
+            string += " |\n"
         string += "+ " + "- " * len(self.grid[0]) + "+\n"
         string += "  "
         for i in range(1, len(self.grid[0]) + 1):
