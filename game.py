@@ -161,7 +161,6 @@ class Configuration(Grid):
 
 class Tetris(Configuration, Shapes):
     def __init__(self, width, height, infinite, type_list):
-        # TODO: fugure out what 
         super(Tetris, self).__init__(width, height)
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
