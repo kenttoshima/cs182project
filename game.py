@@ -7,11 +7,17 @@ class Grid(object):
         self.grid = [[0 for x in range(width)] for y in range(height)]
     
     def __str__(self):
-        string = ""
+        string = "+ " + "- " * len(self.grid[0]) + "+\n"
         for row in self.grid:
+            string += " "
             for cell in row:
-                string += " " + str(cell)
+                string += " " + str(cell if cell else " ")
             string += "\n"
+        string += "+ " + "- " * len(self.grid[0]) + "+\n"
+        string += "  "
+        for i in range(1, len(self.grid[0]) + 1):
+            string += str(i) + " "
+        string += "\n"
         return string
 
     # return (row, column) on given (x, y) coordinate
@@ -84,7 +90,7 @@ class Shape(object):
         string = ""
         for row in self.shape:
             for cell in row:
-                string += " " + str(cell)
+                string += " " + str(cell if cell else " ")
             string += "\n"
         return string
 
@@ -164,16 +170,18 @@ class Tetris(Configuration, Shapes):
     def run(self):
         self.turn += 1
         shape = self.generate(self.turn)
+        print "next object"
         print shape
         print self
         r = input("input rotation number: ") % 4
         for i in range(r):
             shape.rotate()
+        print "next object"
         print shape
         print self
         x = input("input x coordinate: ")
         self.fall(shape, x)
         print self
         self.score += self.scoring(self.clear())
-        print self.score
+        print "score: " + str(self.score)
         
