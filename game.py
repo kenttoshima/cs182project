@@ -1,4 +1,5 @@
 from random import randint
+from copy import deepcopy
 
 class Grid(object):
     def __init__(self, width, height):
@@ -85,6 +86,7 @@ class Shape(object):
         self.shape = self.shape_types[type]
         self.shapeHeight = len(self.shape)
         self.shapeWidth = len(self.shape[0])
+        self.rotation = 0
     
     def __str__(self):
         string = ""
@@ -93,6 +95,12 @@ class Shape(object):
                 string += " " + str(cell if cell else " ")
             string += "\n"
         return string
+    
+    def copy(self):
+        shape = Shape(self.type)
+        for i in range(self.rotation):
+            shape.rotate()
+        return shape
 
     def aslist(self):
         return list(self.shape)
@@ -103,12 +111,13 @@ class Shape(object):
 		                for x in range(len(self.shape[0]) - 1, -1, -1) ]
         self.shapeHeight = len(self.shape)
         self.shapeWidth = len(self.shape[0])
+        self.rotation += 1
 
 class Shapes(Shape):
     def __init__(self, infinite = True, type_list = []):
         super(Shapes, self).__init__(0)
         self.infinite = infinite
-        self.shape_list = [self.shape] + map(lambda type: Shape(type), type_list)
+        self.shape_list = [self] + map(lambda type: Shape(type), type_list)
         
     def generate(self, turn):
         if self.infinite:
@@ -124,7 +133,6 @@ class Configuration(Grid):
 
     def fall(self, shape, x):
         if x < 1 or x + self.width < len(shape.aslist()[0]):
-            # TODO raise error that object does not fit in the x axis
             raise IndexError        
         idx_c = self.cord(x = x)[1]
         height_list = self.active_y()[idx_c:idx_c + len(shape.aslist()[0])]
@@ -165,6 +173,7 @@ class Tetris(Configuration, Shapes):
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
         self.score = 0
+        self.move_list = [(self.shape_list[self.turn].type, 0, 1, self.active_y())]
 
     def run(self):
         self.turn += 1
@@ -179,6 +188,7 @@ class Tetris(Configuration, Shapes):
         print shape
         print self
         x = input("input x coordinate: ")
+        self.move_list.append((shape.type, r, x, self.active_y()))
         self.fall(shape, x)
         print self
         self.score += self.scoring(self.clear())
