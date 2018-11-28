@@ -1,3 +1,7 @@
+########################
+### TETRIS FRAMEWORK ###
+########################
+
 from random import randint
 
 class Error(Exception):
@@ -13,6 +17,14 @@ class InvalidMoveError(Error):
 
     def __str__(self): 
         return(repr(self.x)) 
+
+class CollisionError(Error):
+    def __init__(self, r, c):
+        self.rowidx = r
+        self.colidx = c
+    
+    def __str__(self):
+        return(repr(self.rowidx), repr(self.colidx))
 
 class Grid(object):
     def __init__(self, width, height):
@@ -52,18 +64,19 @@ class Grid(object):
                     active_list[cidx] = self.height - ridx
         return active_list
     
-    # add given shape to given coordinate on down_left point
+    # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
         idx_r, idx_c = self.cord(x, y)
-        # if y - 1 + shape.shapeHeight > self.height:
-        #     raise InvalidMoveError
-        # elif x - 1 + shape.shapeWidth > self.width:
-        #     raise GameOverError
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
-                self.grid[off_y + idx_r - len(shape.aslist()) + 1][off_x + idx_c] += cell
+                r, c = off_y + idx_r - len(shape.aslist()) + 1, off_x + idx_c
+                if self.grid[r][c] != 0 and cell != 0:
+                    # should not be raised because of sanitized Configuration.fall function
+                    raise CollisionError(r, c)
+                else:
+                    self.grid[r][c] += cell
     
-    # remove row of given y if the row is filled
+    # remove row of given y if the row is filled.
     def remove_row(self, c):
         row = self.grid[c]
         if 0 not in row:
@@ -133,7 +146,8 @@ class Shapes(Shape):
         super(Shapes, self).__init__(0)
         self.infinite = infinite
         self.shape_list = [self] + map(lambda type: Shape(type), type_list)
-        
+
+    # generate shapes based on given number of turn. Works for both infinite and finite game.
     def generate(self, turn):
         if self.infinite:
             self.shape_list.append(Shape(randint(1, len(self.shape_types) - 1)))
@@ -146,6 +160,7 @@ class Configuration(Grid):
     def __init__(self, width, height):
         super(Configuration, self).__init__(width, height)
 
+    # drop given shape on grid at given x coordinate
     def fall(self, shape, x):
         if x < 1 or x - 1 + shape.shapeWidth > self.width:
             raise InvalidMoveError(x)
@@ -164,6 +179,7 @@ class Configuration(Grid):
         else:
             self.add_shape(shape, x, y)
     
+    # clear fullfilled row in the grid
     def clear(self):
         cleared = 0
         for i in range(len(self.grid)):
@@ -174,6 +190,7 @@ class Configuration(Grid):
                 pass
         return cleared
     
+    # return score on the number of lines that were cleared
     def scoring(self, line):
         switcher = {
             1: 40,
@@ -191,17 +208,19 @@ class Tetris(Configuration, Shapes):
         self.score = 0
         self.move_list = [(self.shape_list[self.turn].type, 0, 1, self.active_y())]
 
+    # run the whole tetris game
     def run(self):
         self.turn += 1
         shape = self.generate(self.turn)
+        print "turn: " + str(self.turn)
         print "next object"
         print shape
         print self
         while True:
-            r = input("input rotation number: ") % 4
-            for i in range(r):
+            r = input("input rotation number r: ")
+            for i in range(r % 4):
                 shape.rotate()
-            print "next object"
+            print "next object: "
             print shape
             print self
             x = input("input x coordinate: ")
