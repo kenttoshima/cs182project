@@ -1,5 +1,18 @@
 from random import randint
-from copy import deepcopy
+
+class Error(Exception):
+    """Base class for other exceptions"""
+    pass
+
+class GameOverError(Error):
+    pass
+
+class InvalidMoveError(Error):
+    def __init__(self, x): 
+        self.x = x 
+
+    def __str__(self): 
+        return(repr(self.x)) 
 
 class Grid(object):
     def __init__(self, width, height):
@@ -42,8 +55,10 @@ class Grid(object):
     # add given shape to given coordinate on down_left point
     def add_shape(self, shape, x, y):
         idx_r, idx_c = self.cord(x, y)
-        if y - 1 + shape.shapeHeight > self.height or x - 1 + shape.shapeWidth > self.width:
-            raise ValueError
+        # if y - 1 + shape.shapeHeight > self.height:
+        #     raise InvalidMoveError
+        # elif x - 1 + shape.shapeWidth > self.width:
+        #     raise GameOverError
         for off_y, row in enumerate(shape.aslist()):
             for off_x, cell in enumerate(row):
                 self.grid[off_y + idx_r - len(shape.aslist()) + 1][off_x + idx_c] += cell
@@ -132,8 +147,8 @@ class Configuration(Grid):
         super(Configuration, self).__init__(width, height)
 
     def fall(self, shape, x):
-        if x < 1 or x + self.width < len(shape.aslist()[0]):
-            raise IndexError        
+        if x < 1 or x - 1 + shape.shapeWidth > self.width:
+            raise InvalidMoveError(x)
         idx_c = self.cord(x = x)[1]
         height_list = self.active_y()[idx_c:idx_c + len(shape.aslist()[0])]
         fallingOffset = [True for i in range(len(height_list))]
@@ -143,10 +158,11 @@ class Configuration(Grid):
                     height_list[off_x] -= 1
                 else:
                     fallingOffset[off_x] = False
-        try:
-            self.add_shape(shape, x, max(height_list) + 1)
-        except ValueError as g:
-            print g
+        y = max(height_list) + 1
+        if y - 1 + shape.shapeHeight > self.height:
+            raise GameOverError
+        else:
+            self.add_shape(shape, x, y)
     
     def clear(self):
         cleared = 0
@@ -181,16 +197,23 @@ class Tetris(Configuration, Shapes):
         print "next object"
         print shape
         print self
-        r = input("input rotation number: ") % 4
-        for i in range(r):
-            shape.rotate()
-        print "next object"
-        print shape
-        print self
-        x = input("input x coordinate: ")
-        self.move_list.append((shape.type, r, x, self.active_y()))
-        self.fall(shape, x)
+        while True:
+            r = input("input rotation number: ") % 4
+            for i in range(r):
+                shape.rotate()
+            print "next object"
+            print shape
+            print self
+            x = input("input x coordinate: ")
+            self.move_list.append((shape.type, r, x, self.active_y()))
+            try:
+                self.fall(shape, x)
+                break
+            except InvalidMoveError as e:
+                print "Placing on x = " + str(e) + " is an invalid move."
+            except GameOverError:
+                print "Game over with score: " + str(self.score)
+                exit()
         print self
         self.score += self.scoring(self.clear())
         print "score: " + str(self.score)
-        
