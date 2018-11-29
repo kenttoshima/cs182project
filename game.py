@@ -50,10 +50,15 @@ class Grid(object):
     def cord(self, x = 0, y = 0):
         return self.height - y, x - 1
 
-    # return the value of the cell at (x, y)
-    def cell(self, x, y):
-        row, column = self.cord(x, y)
-        return self.grid[row][column]
+    # return the value of the cell at self.grid[r][c]
+    def cell(self, r, c):
+        return self.grid[r][c]
+    
+    # copy the given grid to self
+    def copy(self, givenGrid):
+        for row in self.grid:
+            for column in row:
+                self.grid[row][column] = givenGrid.cell(row, column)
 
     # return list of active height for each column
     def active_y(self):
