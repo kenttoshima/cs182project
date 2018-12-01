@@ -12,17 +12,17 @@ class GameOverError(Error):
     pass
 
 class InvalidMoveError(Error):
-    def __init__(self, x): 
-        self.x = x 
+    def __init__(self, x):
+        self.x = x
 
-    def __str__(self): 
-        return(repr(self.x)) 
+    def __str__(self):
+        return(repr(self.x))
 
 class CollisionError(Error):
     def __init__(self, r, c):
         self.rowidx = r
         self.colidx = c
-    
+
     def __str__(self):
         return(repr(self.rowidx), repr(self.colidx))
 
@@ -31,7 +31,7 @@ class Grid(object):
         self.width = width
         self.height = height
         self.grid = [[0 for x in range(width)] for y in range(height)]
-    
+
     def __str__(self):
         string = "+ " + "- " * len(self.grid[0]) + "+\n"
         for row in self.grid:
@@ -53,12 +53,12 @@ class Grid(object):
     # return the value of the cell at self.grid[r][c]
     def cell(self, r, c):
         return self.grid[r][c]
-    
+
     # copy the given grid to self
-    def copy(self, givenGrid):
-        for row in self.grid:
-            for column in row:
-                self.grid[row][column] = givenGrid.cell(row, column)
+    def copyGrid(self, givenGrid):
+        for ridx, row in enumerate(self.grid):
+            for cidx, cell in enumerate(row):
+                cell = givenGrid.cell(ridx, cidx)
 
     # return list of active height for each column
     def active_y(self):
@@ -68,7 +68,15 @@ class Grid(object):
                 if cell != 0 and active_list[cidx] == 0:
                     active_list[cidx] = self.height - ridx
         return active_list
-    
+
+    # return active layer i.e. list of active_y - min(active_y)
+    def active_layer(self):
+        return map(lambda x: x - min(self.active_y()), self.active_y())
+
+    def active_crevasse(self):
+        for i, col in enumerate(self.active_layer()):
+            self.active_y()[i]
+
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
         idx_r, idx_c = self.cord(x, y)
@@ -80,7 +88,7 @@ class Grid(object):
                     raise CollisionError(r, c)
                 else:
                     self.grid[r][c] += cell
-    
+
     # remove row of given y if the row is filled.
     def remove_row(self, c):
         row = self.grid[c]
@@ -95,24 +103,24 @@ class Shape(object):
         self.type = type
         self.shape_types = [
             [[0]],
-            
+
             [[1, 1, 1],
             [0, 1, 0]],
-            
+
             [[0, 2, 2],
             [2, 2, 0]],
-            
+
             [[3, 3, 0],
             [0, 3, 3]],
-            
+
             [[4, 0, 0],
             [4, 4, 4]],
-            
+
             [[0, 0, 5],
             [5, 5, 5]],
-            
+
             [[6, 6, 6, 6]],
-            
+
             [[7, 7],
             [7, 7]]
             ]
@@ -120,7 +128,7 @@ class Shape(object):
         self.shapeHeight = len(self.shape)
         self.shapeWidth = len(self.shape[0])
         self.rotation = 0
-    
+
     def __str__(self):
         string = ""
         for row in self.shape:
@@ -128,7 +136,7 @@ class Shape(object):
                 string += " " + str(cell if cell else " ")
             string += "\n"
         return string
-    
+
     def copy(self):
         shape = Shape(self.type)
         for i in range(self.rotation):
@@ -144,7 +152,7 @@ class Shape(object):
 		                for x in range(len(self.shape[0]) - 1, -1, -1) ]
         self.shapeHeight = len(self.shape)
         self.shapeWidth = len(self.shape[0])
-        self.rotation += 1
+        self.rotation = (self.rotation + 1) % 4
 
 class Shapes(Shape):
     def __init__(self, infinite = True, type_list = []):
@@ -154,7 +162,7 @@ class Shapes(Shape):
 
     # generate shapes based on given number of turn. Works for both infinite and finite game.
     def generate(self, turn):
-        if self.infinite:
+        if self.infinite and len(self.shape_list) <= turn:
             self.shape_list.append(Shape(randint(1, len(self.shape_types) - 1)))
         if turn > len(self.shape_list):
             raise ValueError
@@ -183,7 +191,7 @@ class Configuration(Grid):
             raise GameOverError
         else:
             self.add_shape(shape, x, y)
-    
+
     # clear fullfilled row in the grid
     def clear(self):
         cleared = 0
@@ -194,7 +202,7 @@ class Configuration(Grid):
             except ValueError:
                 pass
         return cleared
-    
+
     # return score on the number of lines that were cleared
     def scoring(self, line):
         switcher = {
