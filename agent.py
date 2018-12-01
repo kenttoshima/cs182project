@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from game import Tetris, Configuration, InvalidMoveError, GameOverError
 
 def getSuccessor(tetris):
@@ -22,3 +23,6 @@ if __name__ == '__main__':
     while True:
         tetris.run()
         print getSuccessor(tetris)
+=======
+from game import *
+>>>>>>> 5580cebd2db0f98ccc654f8a6da88e23a15c443b
