@@ -69,13 +69,14 @@ class Grid(object):
                     active_list[cidx] = self.height - ridx
         return active_list
 
-    # return active layer i.e. list of active_y - min(active_y)
+    # return active layer i.e. list of active_y - min(active_y) and baseline
     def active_layer(self):
-        return map(lambda x: x - min(self.active_y()), self.active_y())
+        return map(lambda x: x - min(self.active_y()), self.active_y()), min(self.active_y())
 
-    def active_crevasse(self):
-        for i, col in enumerate(self.active_layer()):
-            self.active_y()[i]
+    # TODO:
+    # def active_crevasse(self):
+    #     for i, col in enumerate(self.active_layer()):
+    #         self.active_y()[i]
 
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):

@@ -16,9 +16,11 @@ class Agent(Tetris):
                 try:
                     newConfig.fall(nextShape, x)
                     print newConfig
+                    # def of successor = (x coordinate, no. of rotation, active layer, height of baseline)
                     successor_list.append((x, nextShape.rotation, newConfig.active_layer()))
                 except (InvalidMoveError, GameOverError):
                     pass
+        # if successor_list is empty, meaning gameover in the next turn
         return successor_list
 
 if __name__ == '__main__':
