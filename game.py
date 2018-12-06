@@ -309,6 +309,7 @@ class State(object):
         self.active_layer, base_height = config.active_layer()
         self.base_zone = int(base_height / (config.height / 3.0)) + 1
         self.nextShapeType = shape_type
+        self.holes = config.hole()
 
     def __eq__(self, other):
         if self is other:
@@ -316,7 +317,7 @@ class State(object):
         elif type(self) != type(other):
             return False
         else:
-            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
+            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType and self.holes == other.holes
 
     def __str__(self):
-        return str((self.active_layer, self.base_zone, self.nextShapeType))
+        return str((self.active_layer, self.base_zone, self.nextShapeType, self.holes))
