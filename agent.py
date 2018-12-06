@@ -1,7 +1,7 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 
 class Agent(object):
-    def __init__(self, width = 6, height = 22, delay = 10, alpha = 0.6):
+    def __init__(self, width = 10, height = 20, delay = 20, alpha = 0.6):
         self.width = width
         self.height = height
         self.delay = delay
@@ -26,6 +26,7 @@ class Agent(object):
             else:
                 _state, nextAction = bestStateAndAction
             try:
+                self.alpha *= 0.99
                 tetris.drop(nextAction)
                 prev_turn = tetris.turn - self.delay
                 if prev_turn > 0:
@@ -36,6 +37,8 @@ class Agent(object):
                 if prev_turn > 0:
                     reward = tetris.score - tetris.history[prev_turn][1] - 1000
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward)
+                print tetris
+                print "Game Over with score " + str(tetris.score)
                 break
 
     def query(self, key):
