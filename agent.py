@@ -36,6 +36,7 @@ class Agent(object):
                 if prev_turn > 0:
                     reward = tetris.score - tetris.history[prev_turn][1] - 1000
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward)
+                break
 
     def query(self, key):
         if key not in self.qvalues:
