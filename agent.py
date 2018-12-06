@@ -1,10 +1,11 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 
 class Agent(object):
-    def __init__(self, width = 6, height = 22, delay = 10):
+    def __init__(self, width = 6, height = 22, delay = 10, alpha = 0.6):
         self.width = width
         self.height = height
         self.delay = delay
+        self.alpha = alpha
         self.qvalues = {}
 
     def learn(self):
@@ -26,6 +27,10 @@ class Agent(object):
                 _state, nextAction = bestStateAndAction
             try:
                 tetris.drop(nextAction)
+                prev_turn = tetris.turn - self.delay
+                if prev_turn > 0:
+                    reward = tetris.score - tetris.history[prev_turn][2]
+                    pass
             except GameOverError:
                 break
 
