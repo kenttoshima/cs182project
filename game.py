@@ -96,10 +96,8 @@ class Grid(object):
     def active_layer(self):
         return map(lambda x: x - min(self.active_y()), self.active_y()), min(self.active_y())
 
-    # TODO:
-# def active_crevasse(self):
-#     for i, col in enumerate(self.active_layer()):
-#         self.active_y()[i]
+    # TODO: count number of holes
+    # def hole(self):
 
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
