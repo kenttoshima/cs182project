@@ -1,23 +1,37 @@
-from game import Tetris, Configuration, Action, InvalidMoveError, GameOverError
-
-class State(object):
-    def __init__(self, tetris):
-        self.active_layer, base_height = tetris.active_layer()
-        self.base_zone = base_height / (tetris.height / 3.0)
-        self.nextShapeType = tetris.shape_list[tetris.turn].type
-
-    def __str__(self):
-        return str((self.active_layer, self.base_zone, self.nextShapeType))
+from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 
 class Agent(object):
-    def __init__(self, width, height, delay, )
-        # TODO: need to be able to learn from a lot of games
-        tetris = Tetris(6, 10, True, [])
+    def __init__(self, width = 6, height = 20, delay = 10):
+        self.width = width
+        self.height = height
+        self.delay = delay
+        self.qvalues = {}
+
+    def learn(self):
+        tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
+        while True:
+            tetris.next_turn()
+            successor_list = self.getSuccessor(tetris)
+            maxQvalue = float("-inf")
+            bestStateAndAction = None
+            for stateAndAction in successor_list:
+                if self.query(stateAndAction) > maxQvalue:
+                    bestStateAndAction = stateAndAction
+                    maxQvalue = self.query(stateAndAction)
+            if bestStateAndAction == None:
+                raise GameOverError
+            state, nextAction = bestStateAndAction
+            tetris.drop(nextAction)
+            print state
 
 
+    def query(self, key):
+        if key not in self.qvalues:
+            self.qvalues[key] = 0.
+        return self.qvalues[key]
 
-    def getSuccessor(self):
-        nextShape = tetris.shape_list[self.turn]
+    def getSuccessor(self, tetris):
+        nextShape = tetris.shape_list[tetris.turn]
         successor_list = []
         for i in range(4):
             nextShape.rotate()
@@ -27,9 +41,8 @@ class Agent(object):
                 newConfig.copyGrid(tetris)
                 try:
                     newConfig.fall(nextShape, x)
-                    print newConfig
                     # def of successor = (action, (active layer, height of baseline))
-                    successor_list.append((Action(x, nextShape.rotation), newConfig.active_layer()))
+                    successor_list.append((State(newConfig, nextShape.type), (Action(x, nextShape.rotation))))
                 except (InvalidMoveError, GameOverError):
                     pass
         # if successor_list is empty, meaning gameover in the next turn

@@ -97,9 +97,9 @@ class Grid(object):
         return map(lambda x: x - min(self.active_y()), self.active_y()), min(self.active_y())
 
     # TODO:
-    # def active_crevasse(self):
-    #     for i, col in enumerate(self.active_layer()):
-    #         self.active_y()[i]
+# def active_crevasse(self):
+#     for i, col in enumerate(self.active_layer()):
+#         self.active_y()[i]
 
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
@@ -220,40 +220,40 @@ class Tetris(Configuration, Shapes):
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
         self.score = 0
-        self.move_list = [(self.shape_list[self.turn].type, 0, 1, self.active_y())]
+        self.history = [(Configuration(self.width, self.height).copyGrid(self), Action(1, 0), self.shape_list[self.turn].type, self.score)]
 
-    # run the whole tetris game
-    def run(self):
-        self.turn += 1
-        shape = self.generate(self.turn)
-        print "turn: " + str(self.turn)
-        print "next object"
-        print shape
-        print self
-        while True:
-            for i in range(4):
-                shape.rotate()
-                print i + 1
-                print shape
-            r = input("input rotation number r: ")
-            for i in range(r % 4):
-                shape.rotate()
-            print "next object: "
-            print shape
-            print self
-            x = input("input x coordinate: ")
-            self.move_list.append((shape.type, r, x, self.active_y()))
-            try:
-                self.fall(shape, x)
-                break
-            except InvalidMoveError as e:
-                print "Placing on x = " + str(e) + " is an invalid move."
-            except GameOverError:
-                print "Game over with score: " + str(self.score)
-                exit()
-        print self
-        self.score += self.scoring(self.clear())
-        print "score: " + str(self.score)
+    # # run the whole tetris game
+    # def run(self):
+    #     self.turn += 1
+    #     shape = self.generate(self.turn)
+    #     print "turn: " + str(self.turn)
+    #     print "next object"
+    #     print shape
+    #     print self
+    #     while True:
+    #         for i in range(4):
+    #             shape.rotate()
+    #             print i + 1
+    #             print shape
+    #         r = input("input rotation number r: ")
+    #         for i in range(r % 4):
+    #             shape.rotate()
+    #         print "next object: "
+    #         print shape
+    #         print self
+    #         x = input("input x coordinate: ")
+    #         self.move_list.append((shape.type, r, x, self.active_y()))
+    #         try:
+    #             self.fall(shape, x)
+    #             break
+    #         except InvalidMoveError as e:
+    #             print "Placing on x = " + str(e) + " is an invalid move."
+    #         except GameOverError:
+    #             print "Game over with score: " + str(self.score)
+    #             exit()
+    #     print self
+    #     self.score += self.scoring(self.clear())
+    #     print "score: " + str(self.score)
 
     def next_turn(self):
         self.turn += 1
@@ -265,9 +265,12 @@ class Tetris(Configuration, Shapes):
 
     def drop(self, action):
         shape = self.generate(self.turn)
+        copyState = State(self, shape.type)
+        self.history.append((copyState, action, self.score))
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
+        print self.history
         print self
         self.score += self.scoring(self.clear())
         print "score: " + str(self.score)
@@ -280,3 +283,13 @@ class Action(object):
 
     def __str__(self):
         return str((self.x, self.rotation))
+
+# abstract state for agent usage
+class State(object):
+    def __init__(self, config, shape_type):
+        self.active_layer, base_height = config.active_layer()
+        self.base_zone = base_height / (config.height / 3.0)
+        self.nextShapeType = shape_type
+
+    def __str__(self):
+        return str((self.active_layer, self.base_zone, self.nextShapeType))
