@@ -93,12 +93,10 @@ class Agent(object):
         return nextAction
 
     def computeActionFromQvalues(self, successor_list):
-        for stateAndAction in successor_list:
-            maxQvalue = float("-inf")
-            if self.query(stateAndAction) > maxQvalue:
-                nextAction = stateAndAction[1]
-                maxQvalue = self.query(stateAndAction)
-        return nextAction
+        valueList = []
+        for successor in successor_list:
+            valueList.append((self.query(successor), successor[1]))
+            return max(valueList, key = lambda x : x[0])[1]
 
     def plotresults(self):
         import matplotlib.pyplot as plt
