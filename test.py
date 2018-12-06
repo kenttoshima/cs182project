@@ -8,3 +8,4 @@ if __name__ == '__main__':
         if agent.qvalues[key] != 0.:
             state, action = key
             print str(state) + ", " + str(action) + ": " + str(agent.qvalues[key])
+    agent.plotresults()
