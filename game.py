@@ -97,7 +97,15 @@ class Grid(object):
         return map(lambda x: x - min(self.active_y()), self.active_y()), min(self.active_y())
 
     # TODO: count number of holes
-    # def hole(self):
+    def hole(self):
+        cntr = 0
+        for cidx, colHeight in enumerate(self.active_y()):
+            while colHeight > 0:
+                ridx = self.cord(y=colHeight)[0]
+                if self.cell(ridx, cidx) == 0:
+                    cntr += 1
+                colHeight -= 1
+        return cntr
 
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
@@ -273,8 +281,9 @@ class Tetris(Configuration, Shapes):
         self.fall(shape, action.x)
         # for hist in self.history:
         #     print hist[0], hist[1]
-        # print self
+        print self
         self.score += self.scoring(self.clear())
+        print "hole: " + str(self.hole())
         # print "score: " + str(self.score)
 
 # abstract action for tetris
