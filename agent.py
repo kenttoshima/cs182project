@@ -48,11 +48,13 @@ class Agent(object):
                 self.results.append(tetris.score)
                 break
 
+    # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
         if key not in self.qvalues:
             self.qvalues[key] = 0.0
         return self.qvalues[key]
 
+    # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha):
         self.qvalues[key] = (1 - alpha) * self.query(key) + alpha * updateValue
 
@@ -74,31 +76,40 @@ class Agent(object):
         # if successor_list is empty, meaning gameover in the next turn
         return successor_list
 
+    # return reward on given game and turn you want to calculate the score increase
+    # if isGameOver == True, then return gameover penalty
     def reward(self, turn, tetris, isGameOver):
         if isGameOver:
             return GAMEOVER_PENALTY
         else:
             return tetris.score - tetris.history[turn][1]
 
-
+    # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):
         successor_list = self.getSuccessor(tetris)
         if not successor_list:
             nextAction = Action(1, 0)
-        elif random() > (1 - epsilon):
+        elif not random() < epsilon:
             (state, nextAction) = choice(successor_list)
             _qvalue = self.query((state, nextAction))
         else:
             nextAction = self.computeActionFromQvalues(successor_list)
         return nextAction
 
+    # return action from given successor list based on Q-value
     def computeActionFromQvalues(self, successor_list):
         valueList = []
         for successor in successor_list:
             valueList.append((self.query(successor), successor[1]))
             return max(valueList, key = lambda x : x[0])[1]
 
+    # plotting the learning result
     def plotresults(self):
+        mean_sum = []
+        sumsofar = 0
+        for i, score in enumerate(self.results):
+            sumsofar += score
+            mean_sum.append(sumsofar / float((i + 1)))
         import matplotlib.pyplot as plt
-        plt.plot(self.results)
+        plt.plot(mean_sum)
         plt.show()
