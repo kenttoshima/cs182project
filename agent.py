@@ -29,8 +29,8 @@ class Agent(object):
                 tetris.drop(nextAction)
                 prev_turn = tetris.turn - self.delay
                 if prev_turn > 0:
-                    reward = tetris.score - tetris.history[prev_turn][2]
-                    pass
+                    reward = tetris.score - tetris.history[prev_turn][1]
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward)
             except GameOverError:
                 break
 
