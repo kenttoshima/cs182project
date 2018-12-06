@@ -2,13 +2,19 @@ from game import Tetris, Configuration, Action, InvalidMoveError, GameOverError
 
 class State(object):
     def __init__(self, tetris):
-        self.active_layer = tetris.active_layer()
+        self.active_layer, base_height = tetris.active_layer()
+        self.base_zone = base_height / (tetris.height / 3.0)
         self.nextShapeType = tetris.shape_list[tetris.turn].type
+
+    def __str__(self):
+        return str((self.active_layer, self.base_zone, self.nextShapeType))
 
 class Agent(object):
     def __init__(self, width, height, delay, )
         # TODO: need to be able to learn from a lot of games
         tetris = Tetris(6, 10, True, [])
+
+
 
     def getSuccessor(self):
         nextShape = tetris.shape_list[self.turn]
@@ -33,4 +39,4 @@ class Agent(object):
 if __name__ == '__main__':
     tetris = Tetris(6, 10, False, [1,4,2,5,2,3,2,6,3])
     while True:
-        print getSuccessor(tetris)
+        tetris.run()

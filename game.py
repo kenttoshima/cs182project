@@ -222,38 +222,38 @@ class Tetris(Configuration, Shapes):
         self.score = 0
         self.move_list = [(self.shape_list[self.turn].type, 0, 1, self.active_y())]
 
-    # # run the whole tetris game
-    # def run(self):
-    #     self.turn += 1
-    #     shape = self.generate(self.turn)
-    #     print "turn: " + str(self.turn)
-    #     print "next object"
-    #     print shape
-    #     print self
-    #     while True:
-    #         for i in range(4):
-    #             shape.rotate()
-    #             print i + 1
-    #             print shape
-    #         r = input("input rotation number r: ")
-    #         for i in range(r % 4):
-    #             shape.rotate()
-    #         print "next object: "
-    #         print shape
-    #         print self
-    #         x = input("input x coordinate: ")
-    #         self.move_list.append((shape.type, r, x, self.active_y()))
-    #         try:
-    #             self.fall(shape, x)
-    #             break
-    #         except InvalidMoveError as e:
-    #             print "Placing on x = " + str(e) + " is an invalid move."
-    #         except GameOverError:
-    #             print "Game over with score: " + str(self.score)
-    #             exit()
-    #     print self
-    #     self.score += self.scoring(self.clear())
-    #     print "score: " + str(self.score)
+    # run the whole tetris game
+    def run(self):
+        self.turn += 1
+        shape = self.generate(self.turn)
+        print "turn: " + str(self.turn)
+        print "next object"
+        print shape
+        print self
+        while True:
+            for i in range(4):
+                shape.rotate()
+                print i + 1
+                print shape
+            r = input("input rotation number r: ")
+            for i in range(r % 4):
+                shape.rotate()
+            print "next object: "
+            print shape
+            print self
+            x = input("input x coordinate: ")
+            self.move_list.append((shape.type, r, x, self.active_y()))
+            try:
+                self.fall(shape, x)
+                break
+            except InvalidMoveError as e:
+                print "Placing on x = " + str(e) + " is an invalid move."
+            except GameOverError:
+                print "Game over with score: " + str(self.score)
+                exit()
+        print self
+        self.score += self.scoring(self.clear())
+        print "score: " + str(self.score)
 
     def next_turn(self):
         self.turn += 1
