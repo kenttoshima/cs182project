@@ -16,7 +16,7 @@ class Agent(object):
             maxQvalue = float("-inf")
             bestStateAndAction = None
             for stateAndAction in successor_list:
-                print stateAndAction[0], stateAndAction[1]
+                # print stateAndAction[0], stateAndAction[1]
                 if self.query(stateAndAction) > maxQvalue:
                     bestStateAndAction = stateAndAction
                     maxQvalue = self.query(stateAndAction)
@@ -36,15 +36,15 @@ class Agent(object):
 
     def query(self, key):
         if key not in self.qvalues:
-            print "new key: " + str(key[0]) + str(key[1])
+            # print "new key: " + str(key[0]) + str(key[1])
             self.qvalues[key] = 0.0
-        else:
-            print "key exists" + str(key[0]) + str(key[1])
-        print self.qvalues[key]
+        # else:
+        #     print "key exists" + str(key[0]) + str(key[1])
+        # print self.qvalues[key]
         return self.qvalues[key]
 
     def qvalueUpdate(self, key, updateValue):
-        self.qvalues[key] = (1 - self.alpha) * self.qvalues[key] + self.alpha * updateValue
+        self.qvalues[key] = (1 - self.alpha) * self.query(key) + self.alpha * updateValue
 
     def getSuccessor(self, tetris):
         nextShape = tetris.shape_list[tetris.turn]
