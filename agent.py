@@ -23,11 +23,11 @@ class Agent(object):
             if bestStateAndAction == None:
                 nextAction = Action(1, 0)
             else:
-                state, nextAction = bestStateAndAction
+                _state, nextAction = bestStateAndAction
             try:
                 tetris.drop(nextAction)
-            except GameOverError as gameover:
-                raise GameOverError
+            except GameOverError:
+                break
 
     def query(self, key):
         if key not in self.qvalues:
