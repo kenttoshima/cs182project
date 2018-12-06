@@ -1,7 +1,7 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 
 class Agent(object):
-    def __init__(self, width = 6, height = 20, delay = 10):
+    def __init__(self, width = 6, height = 22, delay = 10):
         self.width = width
         self.height = height
         self.delay = delay
@@ -15,19 +15,27 @@ class Agent(object):
             maxQvalue = float("-inf")
             bestStateAndAction = None
             for stateAndAction in successor_list:
+                print stateAndAction[0], stateAndAction[1]
                 if self.query(stateAndAction) > maxQvalue:
                     bestStateAndAction = stateAndAction
                     maxQvalue = self.query(stateAndAction)
+            # if all the successors raise GameOverError
             if bestStateAndAction == None:
+                nextAction = Action(1, 0)
+            else:
+                state, nextAction = bestStateAndAction
+            try:
+                tetris.drop(nextAction)
+            except GameOverError as gameover:
                 raise GameOverError
-            state, nextAction = bestStateAndAction
-            tetris.drop(nextAction)
-            print state
-
 
     def query(self, key):
         if key not in self.qvalues:
-            self.qvalues[key] = 0.
+            print "new key: " + str(key[0]) + str(key[1])
+            self.qvalues[key] = 0.0
+        else:
+            print "key exists" + str(key[0]) + str(key[1])
+        print self.qvalues[key]
         return self.qvalues[key]
 
     def getSuccessor(self, tetris):
@@ -47,9 +55,3 @@ class Agent(object):
                     pass
         # if successor_list is empty, meaning gameover in the next turn
         return successor_list
-
-# TODO: test does not work
-if __name__ == '__main__':
-    tetris = Tetris(6, 10, False, [1,4,2,5,2,3,2,6,3])
-    while True:
-        tetris.run()

@@ -57,11 +57,11 @@ class Grid(object):
 
     def __str__(self):
         string = "+ " + "- " * len(self.grid[0]) + "+\n"
-        for row in self.grid:
+        for i, row in enumerate(self.grid):
             string += "|"
             for cell in row:
                 string += " " + str(cell if cell else " ")
-            string += " |\n"
+            string += " | "  + str(self.height - i) + "\n"
         string += "+ " + "- " * len(self.grid[0]) + "+\n"
         string += "  "
         for i in range(1, len(self.grid[0]) + 1):
@@ -218,7 +218,10 @@ class Tetris(Configuration, Shapes):
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
         self.score = 0
-        self.history = [(Configuration(self.width, self.height).copyGrid(self), Action(1, 0), self.shape_list[self.turn].type, self.score)]
+        # history for turn 0: should not be considered
+        state = State(self, self.shape_list[self.turn].type)
+        action = Action(0, 0)
+        self.history = [(state, action, self.score)]
 
     # # run the whole tetris game
     # def run(self):
@@ -268,7 +271,8 @@ class Tetris(Configuration, Shapes):
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
-        print self.history
+        # for hist in self.history:
+        #     print hist[0], hist[1]
         print self
         self.score += self.scoring(self.clear())
         print "score: " + str(self.score)
@@ -279,6 +283,14 @@ class Action(object):
         self.x = x
         self.rotation = rotation
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            return self.x == other.x and self.rotation == other.rotation
+
     def __str__(self):
         return str((self.x, self.rotation))
 
@@ -286,8 +298,16 @@ class Action(object):
 class State(object):
     def __init__(self, config, shape_type):
         self.active_layer, base_height = config.active_layer()
-        self.base_zone = base_height / (config.height / 3.0)
+        self.base_zone = int(base_height / (config.height / 3.0)) + 1
         self.nextShapeType = shape_type
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
 
     def __str__(self):
         return str((self.active_layer, self.base_zone, self.nextShapeType))
