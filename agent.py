@@ -1,6 +1,8 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 from random import random, choice
 
+GAMEOVER_PENALTY = -1000
+
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
         self.width = width
@@ -19,32 +21,27 @@ class Agent(object):
         self.learning_no += 1
         while True:
             tetris.next_turn()
-            successor_list = self.getSuccessor(tetris)
-            maxQvalue = float("-inf")
-            bestStateAndAction = None
-            if not successor_list:
-                nextAction = Action(1, 0)
-            elif random() > (1 - epsilon):
-                (state, nextAction) = choice(successor_list)
-                self.query((state, nextAction))
-            else:
-                for stateAndAction in successor_list:
-                    if self.query(stateAndAction) > maxQvalue:
-                        bestStateAndAction = stateAndAction
-                        maxQvalue = self.query(stateAndAction)
-                _state, nextAction = bestStateAndAction
+            nextAction = self.getAction(tetris, epsilon)
             try:
                 alpha *= 0.99
                 epsilon *= 0.8
                 tetris.drop(nextAction)
-                prev_turn = tetris.turn - self.delay
+                prev_turn = tetris.turn - 1
+                delay_turn = tetris.turn - self.delay
+                if delay_turn > 0:
+                    reward = tetris.score - tetris.history[delay_turn][1]
+                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha)
                 if prev_turn > 0:
                     reward = tetris.score - tetris.history[prev_turn][1]
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
             except GameOverError:
-                prev_turn = tetris.turn - self.delay
+                prev_turn = tetris.turn - 1
+                delay_turn = tetris.turn - self.delay
+                if delay_turn > 0:
+                    reward = tetris.score - tetris.history[delay_turn][1] + GAMEOVER_PENALTY
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
                 if prev_turn > 0:
-                    reward = tetris.score - tetris.history[prev_turn][1] - 1000
+                    reward = tetris.score - tetris.history[delay_turn][1] + GAMEOVER_PENALTY
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
                 print ""
                 print str(self.learning_no) + "th learning"
@@ -77,3 +74,22 @@ class Agent(object):
                     pass
         # if successor_list is empty, meaning gameover in the next turn
         return successor_list
+
+    def getAction(self, tetris, epsilon):
+        successor_list = self.getSuccessor(tetris)
+        if not successor_list:
+            nextAction = Action(1, 0)
+        elif random() > (1 - epsilon):
+            (state, nextAction) = choice(successor_list)
+            _qvalue = self.query((state, nextAction))
+        else:
+            nextAction = self.computeActionFromQvalues(successor_list)
+        return nextAction
+
+    def computeActionFromQvalues(self, successor_list):
+        for stateAndAction in successor_list:
+            maxQvalue = float("-inf")
+            if self.query(stateAndAction) > maxQvalue:
+                _state, nextAction = stateAndAction[1]
+                maxQvalue = self.query(stateAndAction)
+        return nextAction
