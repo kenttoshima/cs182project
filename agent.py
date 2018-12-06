@@ -43,6 +43,9 @@ class Agent(object):
         print self.qvalues[key]
         return self.qvalues[key]
 
+    def qvalueUpdate(self, key, updateValue):
+        self.qvalues[key] = (1 - self.alpha) * self.qvalues[key] + self.alpha * updateValue
+
     def getSuccessor(self, tetris):
         nextShape = tetris.shape_list[tetris.turn]
         successor_list = []
