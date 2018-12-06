@@ -3,6 +3,29 @@
 ########################
 
 from random import randint
+SHAPE_TYPES = [
+            [[0]],
+
+            [[1, 1, 1],
+            [0, 1, 0]],
+
+            [[0, 2, 2],
+            [2, 2, 0]],
+
+            [[3, 3, 0],
+            [0, 3, 3]],
+
+            [[4, 0, 0],
+            [4, 4, 4]],
+
+            [[0, 0, 5],
+            [5, 5, 5]],
+
+            [[6, 6, 6, 6]],
+
+            [[7, 7],
+            [7, 7]]
+            ]
 
 class Error(Exception):
     """Base class for other exceptions"""
@@ -102,30 +125,7 @@ class Grid(object):
 class Shape(object):
     def __init__(self, type):
         self.type = type
-        self.shape_types = [
-            [[0]],
-
-            [[1, 1, 1],
-            [0, 1, 0]],
-
-            [[0, 2, 2],
-            [2, 2, 0]],
-
-            [[3, 3, 0],
-            [0, 3, 3]],
-
-            [[4, 0, 0],
-            [4, 4, 4]],
-
-            [[0, 0, 5],
-            [5, 5, 5]],
-
-            [[6, 6, 6, 6]],
-
-            [[7, 7],
-            [7, 7]]
-            ]
-        self.shape = self.shape_types[type]
+        self.shape = SHAPE_TYPES[type]
         self.shapeHeight = len(self.shape)
         self.shapeWidth = len(self.shape[0])
         self.rotation = 0
@@ -164,7 +164,7 @@ class Shapes(Shape):
     # generate shapes based on given number of turn. Works for both infinite and finite game.
     def generate(self, turn):
         if self.infinite and len(self.shape_list) <= turn:
-            self.shape_list.append(Shape(randint(1, len(self.shape_types) - 1)))
+            self.shape_list.append(Shape(randint(1, len(SHAPE_TYPES) - 1)))
         if turn > len(self.shape_list):
             raise ValueError
         else:
@@ -231,6 +231,10 @@ class Tetris(Configuration, Shapes):
     #     print shape
     #     print self
     #     while True:
+    #         for i in range(4):
+    #             shape.rotate()
+    #             print i + 1
+    #             print shape
     #         r = input("input rotation number r: ")
     #         for i in range(r % 4):
     #             shape.rotate()
@@ -259,11 +263,20 @@ class Tetris(Configuration, Shapes):
         print shape
         print self
 
-    def drop(self, x, rotation):
+    def drop(self, action):
         shape = self.generate(self.turn)
-        for i in range(rotation % 4):
+        for i in range(action.rotation % 4):
             shape.rotate()
-        self.fall(shape, x)
+        self.fall(shape, action.x)
         print self
         self.score += self.scoring(self.clear())
         print "score: " + str(self.score)
+
+# abstract action for tetris
+class Action(object):
+    def __init__(self, x, rotation):
+        self.x = x
+        self.rotation = rotation
+
+    def __str__(self):
+        return str((self.x, self.rotation))
