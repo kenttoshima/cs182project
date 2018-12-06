@@ -266,7 +266,7 @@ class Tetris(Configuration, Shapes):
 
     def next_turn(self):
         self.turn += 1
-        shape = self.generate(self.turn)
+        _shape = self.generate(self.turn)
         # print "turn: " + str(self.turn)
         # print "next object"
         # print shape
@@ -279,11 +279,8 @@ class Tetris(Configuration, Shapes):
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
-        # for hist in self.history:
-        #     print hist[0], hist[1]
-        print self
+        # print self
         self.score += self.scoring(self.clear())
-        print "hole: " + str(self.hole())
         # print "score: " + str(self.score)
 
 # abstract action for tetris

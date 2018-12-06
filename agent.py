@@ -2,18 +2,21 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 
 class Agent(object):
-    def __init__(self, width = 10, height = 20, delay = 20, alpha = 0.6, epsilon = 0.8):
+    def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
         self.width = width
         self.height = height
         self.delay = delay
         self.alpha = alpha
         self.epsilon = epsilon
+        self.learning_no = 0
         self.qvalues = {}
 
+    # Q value learning function
     def learn(self):
         alpha = self.alpha
         epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
+        self.learning_no += 1
         while True:
             tetris.next_turn()
             successor_list = self.getSuccessor(tetris)
@@ -26,7 +29,6 @@ class Agent(object):
                 self.query((state, nextAction))
             else:
                 for stateAndAction in successor_list:
-                    # print stateAndAction[0], stateAndAction[1]
                     if self.query(stateAndAction) > maxQvalue:
                         bestStateAndAction = stateAndAction
                         maxQvalue = self.query(stateAndAction)
@@ -44,17 +46,15 @@ class Agent(object):
                 if prev_turn > 0:
                     reward = tetris.score - tetris.history[prev_turn][1] - 1000
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
+                print ""
+                print str(self.learning_no) + "th learning"
                 print tetris
-                print "Game Over with score " + str(tetris.score)
+                print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
                 break
 
     def query(self, key):
         if key not in self.qvalues:
-            # print "new key: " + str(key[0]) + str(key[1])
             self.qvalues[key] = 0.0
-        # else:
-        #     print "key exists" + str(key[0]) + str(key[1])
-        # print self.qvalues[key]
         return self.qvalues[key]
 
     def qvalueUpdate(self, key, updateValue, alpha):
