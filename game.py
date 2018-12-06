@@ -259,10 +259,10 @@ class Tetris(Configuration, Shapes):
     def next_turn(self):
         self.turn += 1
         shape = self.generate(self.turn)
-        print "turn: " + str(self.turn)
-        print "next object"
-        print shape
-        print self
+        # print "turn: " + str(self.turn)
+        # print "next object"
+        # print shape
+        # print self
 
     def drop(self, action):
         shape = self.generate(self.turn)
@@ -273,7 +273,7 @@ class Tetris(Configuration, Shapes):
         self.fall(shape, action.x)
         # for hist in self.history:
         #     print hist[0], hist[1]
-        print self
+        # print self
         self.score += self.scoring(self.clear())
         print "score: " + str(self.score)
 

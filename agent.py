@@ -32,7 +32,10 @@ class Agent(object):
                     reward = tetris.score - tetris.history[prev_turn][1]
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward)
             except GameOverError:
-                break
+                prev_turn = tetris.turn - self.delay
+                if prev_turn > 0:
+                    reward = tetris.score - tetris.history[prev_turn][1] - 1000
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward)
 
     def query(self, key):
         if key not in self.qvalues:
