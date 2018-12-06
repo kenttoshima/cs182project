@@ -221,7 +221,7 @@ class Tetris(Configuration, Shapes):
         # history for turn 0: should not be considered
         state = State(self, self.shape_list[self.turn].type)
         action = Action(0, 0)
-        self.history = [(state, action, self.score)]
+        self.history = [((state, action), self.score)]
 
     # # run the whole tetris game
     # def run(self):
@@ -267,7 +267,7 @@ class Tetris(Configuration, Shapes):
     def drop(self, action):
         shape = self.generate(self.turn)
         copyState = State(self, shape.type)
-        self.history.append((copyState, action, self.score))
+        self.history.append(((copyState, action), self.score))
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
