@@ -2,7 +2,7 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 
 LEARNING_RATE_DECAY = 0.95
-EPSILON_DECAY = 0.8
+EPSILON_DECAY = 0.98
 
 #weights 
 GAMEOVER_PENALTY = -10
@@ -41,8 +41,8 @@ class Agent(object):
             try:
                 tetris.drop(nextAction)
                 if delay_turn > 0:
-                    reward = self.reward(prev_turn, tetris, False)
-                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha)
+                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change 
+                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha) #...and we then use it to update the old turn
                 if prev_turn > 0:
                     reward = self.reward(prev_turn, tetris, False)
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
@@ -125,5 +125,6 @@ class Agent(object):
             sumsofar += score
             mean_sum.append(sumsofar / float((i + 1)))
         import matplotlib.pyplot as plt
+        plt.plot(self.results)
         plt.plot(mean_sum)
         plt.show()
