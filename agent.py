@@ -1,9 +1,13 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 from random import random, choice
 
-GAMEOVER_PENALTY = -1000
 LEARNING_RATE_DECAY = 0.95
 EPSILON_DECAY = 0.8
+
+#weights 
+GAMEOVER_PENALTY = -10
+SCORE_WEIGHT = 1 
+HOLE_WEIGHT = -100
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
@@ -17,12 +21,17 @@ class Agent(object):
         self.results = []
 
     # Q value learning function
-    def learn(self):
+    def learn(self, debug = False):
         alpha = self.alpha
         epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
         self.learning_no += 1
         while True:
+            if(debug):
+                print ""
+                print tetris.shape_list[tetris.turn]
+                print tetris
+                print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
             tetris.next_turn()
             nextAction = self.getAction(tetris, epsilon)
             prev_turn = tetris.turn - 1
@@ -44,6 +53,7 @@ class Agent(object):
                 # print ""
                 # print str(self.learning_no) + "th learning"
                 # print tetris
+
                 # print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
                 self.results.append(tetris.score)
                 break
@@ -82,7 +92,11 @@ class Agent(object):
         if isGameOver:
             return GAMEOVER_PENALTY
         else:
-            return tetris.score - tetris.history[turn][1]
+            past_score = tetris.history[turn][1]
+            past_holes = tetris.history[turn][2]
+            score_change = tetris.score - past_score
+            holes_change = tetris.num_holes - past_holes
+            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change
 
     # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):

@@ -220,16 +220,18 @@ class Configuration(Grid):
         }
         return switcher.get(line, 0)
 
+
 class Tetris(Configuration, Shapes):
     def __init__(self, width, height, infinite, type_list):
         super(Tetris, self).__init__(width, height)
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
         self.score = 0
+        self.num_holes = 0 #Net number of holes in whole game board
         # history for turn 0: should not be considered
         state = State(self, self.shape_list[self.turn].type)
         action = Action(0, 0)
-        self.history = [((state, action), self.score)]
+        self.history = [((state, action), self.score, self.num_holes)]
 
     # # run the whole tetris game
     # def run(self):
@@ -275,12 +277,13 @@ class Tetris(Configuration, Shapes):
     def drop(self, action):
         shape = self.generate(self.turn)
         copyState = State(self, shape.type)
-        self.history.append(((copyState, action), self.score))
+        self.history.append(((copyState, action), self.score, self.num_holes))
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
         # print self
         self.score += self.scoring(self.clear())
+        self.num_holes = self.hole()
         # print "score: " + str(self.score)
 
 # abstract action for tetris
@@ -306,7 +309,6 @@ class State(object):
         self.active_layer, base_height = config.active_layer()
         self.base_zone = int(base_height / (config.height / 3.0)) + 1
         self.nextShapeType = shape_type
-        self.holes = config.hole()
 
     def __eq__(self, other):
         if self is other:
@@ -314,7 +316,7 @@ class State(object):
         elif type(self) != type(other):
             return False
         else:
-            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType and self.holes == other.holes
+            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
 
     def __str__(self):
-        return str((self.active_layer, self.base_zone, self.nextShapeType, self.holes))
+        return str((self.active_layer, self.base_zone, self.nextShapeType))
