@@ -23,6 +23,8 @@ class Agent(object):
 
     # Q value learning function
     def learn(self, debug = False):
+        self.query_count = 0
+        self.query_hit = 0
         alpha = self.alpha
         epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
@@ -64,9 +66,12 @@ class Agent(object):
                 print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
+        self.query_count += 1
         if key not in self.qvalues:
             self.qvalues[key] = 0.0
-        return self.qvalues[key]
+        val = self.qvalues[key]
+        self.query_hit = (self.query_hit + 1 ) if val != 0.0 else (self.query_hit)
+        return val 
 
     # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
@@ -130,7 +135,7 @@ class Agent(object):
             return max(valueList, key = lambda x : x[0])[1]
 
     # plotting the learning result
-    def plotresults(self):
+    def plotresults(self, additional_plt):
         mean_sum = []
         sumsofar = 0
         for i, score in enumerate(self.results):
@@ -139,4 +144,5 @@ class Agent(object):
         import matplotlib.pyplot as plt
         plt.plot(self.results)
         plt.plot(mean_sum)
+        plt.plot(additional_plt)
         plt.show()
