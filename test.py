@@ -5,10 +5,6 @@ if __name__ == '__main__':
 
     query_hit_rate = []
     for i in range(stop):
-        if i % 100 == 0:
-            elapsed_time = time() - start_time
-            print elapsed_time
-            print i
         agent.learn()
         query_hit_rate.append( (agent.query_hit*1.0)/agent.query_count )
 
