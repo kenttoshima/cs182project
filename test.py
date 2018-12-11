@@ -1,8 +1,14 @@
 if __name__ == '__main__':
     from agent import Agent
-    agent = Agent(width = 6, height = 15, delay = 10, alpha = 0.6, epsilon = 0.8)
+    from time import time
+    agent = Agent(width = 10, height = 20, delay = 25, alpha = 0.8, epsilon = 0.8)
     stop = input("How many times do you want to learn?: ")
+    start_time = time()
     for i in range(stop):
+        if i % 100 == 0:
+            elapsed_time = time() - start_time
+            print elapsed_time
+            print i
         agent.learn()
     for key in agent.qvalues:
         if agent.qvalues[key] != 0.:

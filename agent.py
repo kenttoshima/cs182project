@@ -3,7 +3,7 @@ from random import random, choice
 
 GAMEOVER_PENALTY = -1000
 LEARNING_RATE_DECAY = 0.95
-EPSILON_DECAY = 0.8
+EPSILON_DECAY = 0.95
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
