@@ -1,17 +1,24 @@
 if __name__ == '__main__':
     from agent import Agent
-    from time import time
-    agent = Agent(width = 10, height = 20, delay = 25, alpha = 0.8, epsilon = 0.8)
+    agent = Agent(width = 4, height = 12, delay = 2, alpha = 0.6, epsilon = 0.8)
     stop = input("How many times do you want to learn?: ")
-    start_time = time()
+
+    query_hit_rate = []
     for i in range(stop):
         if i % 100 == 0:
             elapsed_time = time() - start_time
             print elapsed_time
             print i
         agent.learn()
+        query_hit_rate.append( (agent.query_hit*1.0)/agent.query_count )
+
     for key in agent.qvalues:
         if agent.qvalues[key] != 0.:
             state, action = key
             print str(state) + ", " + str(action) + ": " + str(agent.qvalues[key])
-    agent.plotresults()
+
+
+    agent.learn(True)
+
+
+    agent.plotresults([2000*i for i in query_hit_rate])

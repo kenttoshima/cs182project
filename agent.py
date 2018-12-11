@@ -1,9 +1,14 @@
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 from random import random, choice
 
-GAMEOVER_PENALTY = -1000
 LEARNING_RATE_DECAY = 0.95
-EPSILON_DECAY = 0.95
+EPSILON_DECAY = 0.98
+GAMMA = 0.50
+
+#weights
+GAMEOVER_PENALTY = -100
+SCORE_WEIGHT = 1
+HOLE_WEIGHT = -50
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
@@ -17,7 +22,9 @@ class Agent(object):
         self.results = []
 
     # Q value learning function
-    def learn(self):
+    def learn(self, debug = False):
+        self.query_count = 0
+        self.query_hit = 0
         alpha = self.alpha
         epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
@@ -30,13 +37,16 @@ class Agent(object):
             alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
+                # print "Pre state is {}".format(tetris.State(tetris.shape_list[tetris.turn].type))
                 tetris.drop(nextAction)
+                state_prime = State(tetris, tetris.shape_lookahead().type)
+                actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
                 if delay_turn > 0:
-                    reward = self.reward(prev_turn, tetris, False)
-                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha)
+                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
+                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
                 if prev_turn > 0:
                     reward = self.reward(prev_turn, tetris, False)
-                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha)
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
             except GameOverError:
                 for turn_offset in range(1, 1 + self.delay):
                     if tetris.turn - turn_offset > 0:
@@ -44,19 +54,36 @@ class Agent(object):
                 # print ""
                 # print str(self.learning_no) + "th learning"
                 # print tetris
+
                 # print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
                 self.results.append(tetris.score)
                 break
 
+            if(debug):
+                print ""
+                print tetris.shape_list[tetris.turn]
+                print tetris
+                print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
+        self.query_count += 1
         if key not in self.qvalues:
             self.qvalues[key] = 0.0
-        return self.qvalues[key]
+        val = self.qvalues[key]
+        self.query_hit = (self.query_hit + 1 ) if val != 0.0 else (self.query_hit)
+        return val
 
     # update Q-value based on alpha
-    def qvalueUpdate(self, key, updateValue, alpha):
-        self.qvalues[key] = (1 - alpha) * self.query(key) + alpha * updateValue
+    def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
+        next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
+
+
+        #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative
+        #and even one of the q-vals is uninitialized. If we only query initialized q-vals or use a heuristic-initialized Q-vals and more learning, this would not be needed.
+        filtered_next = filter(lambda x : x != 0, next_qvals)
+        max_next = max(filtered_next) if (len(filtered_next) > 0) else 0
+
+        self.qvalues[key] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
 
     def getSuccessor(self, tetris):
         nextShape = tetris.shape_list[tetris.turn]
@@ -82,7 +109,11 @@ class Agent(object):
         if isGameOver:
             return GAMEOVER_PENALTY
         else:
-            return tetris.score - tetris.history[turn][1]
+            past_score = tetris.history[turn][1]
+            past_holes = tetris.history[turn][2]
+            score_change = tetris.score - past_score
+            holes_change = tetris.num_holes - past_holes
+            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change
 
     # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):
@@ -104,12 +135,14 @@ class Agent(object):
             return max(valueList, key = lambda x : x[0])[1]
 
     # plotting the learning result
-    def plotresults(self):
+    def plotresults(self, additional_plt):
         mean_sum = []
         sumsofar = 0
         for i, score in enumerate(self.results):
             sumsofar += score
             mean_sum.append(sumsofar / float((i + 1)))
         import matplotlib.pyplot as plt
+        plt.plot(self.results)
         plt.plot(mean_sum)
+        plt.plot(additional_plt)
         plt.show()
