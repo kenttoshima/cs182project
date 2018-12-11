@@ -274,6 +274,9 @@ class Tetris(Configuration, Shapes):
         # print shape
         # print self
 
+    def shape_lookahead(self):
+        return self.generate(self.turn + 1)
+
     def drop(self, action):
         shape = self.generate(self.turn)
         copyState = State(self, shape.type)
