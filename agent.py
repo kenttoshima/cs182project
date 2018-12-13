@@ -5,10 +5,10 @@ LEARNING_RATE_DECAY = 0.95
 EPSILON_DECAY = 0.98
 GAMMA = 0.50
 
-#weights 
+#weights
 GAMEOVER_PENALTY = -100
-SCORE_WEIGHT = 1 
-HOLE_WEIGHT = -50 
+SCORE_WEIGHT = 1
+HOLE_WEIGHT = -50
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
@@ -42,7 +42,7 @@ class Agent(object):
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
                 if delay_turn > 0:
-                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change 
+                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
                     self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
                 if prev_turn > 0:
                     reward = self.reward(prev_turn, tetris, False)
@@ -71,14 +71,14 @@ class Agent(object):
             self.qvalues[key] = 0.0
         val = self.qvalues[key]
         self.query_hit = (self.query_hit + 1 ) if val != 0.0 else (self.query_hit)
-        return val 
+        return val
 
     # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
         next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
 
 
-        #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative 
+        #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative
         #and even one of the q-vals is uninitialized. If we only query initialized q-vals or use a heuristic-initialized Q-vals and more learning, this would not be needed.
         filtered_next = filter(lambda x : x != 0, next_qvals)
         max_next = max(filtered_next) if (len(filtered_next) > 0) else 0
