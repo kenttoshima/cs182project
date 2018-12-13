@@ -220,6 +220,10 @@ class Configuration(Grid):
         }
         return switcher.get(line, 0)
 
+    def heuristic_value(self):
+        (al,_height) = self.active_layer()
+        return sum([i**2 for i in al])        
+
 
 class Tetris(Configuration, Shapes):
     def __init__(self, width, height, infinite, type_list):
@@ -310,7 +314,7 @@ class Action(object):
 class State(object):
     def __init__(self, config, shape_type):
         self.active_layer, base_height = config.active_layer()
-        self.base_zone = int(base_height / (config.height / 3.0)) + 1
+        #self.base_zone = int(base_height / (config.height / 3.0)) + 1
         self.nextShapeType = shape_type
 
     def __eq__(self, other):
@@ -319,7 +323,19 @@ class State(object):
         elif type(self) != type(other):
             return False
         else:
-            return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
-
+            #return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
+            return self.active_layer == other.active_layer and self.nextShapeType == other.nextShapeType
     def __str__(self):
-        return str((self.active_layer, self.base_zone, self.nextShapeType))
+        #return str((self.active_layer, self.base_zone, self.nextShapeType))
+        return str((self.active_layer, self.nextShapeType))
+
+    def to_config(self):
+        width = len(self.active_layer)
+        height = max(self.active_layer) + 4 
+        ret = Configuration(width=width, height=height)
+        ret.grid = [[1 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
+        print ret.grid
+        ret.grid = ret.grid[::-1]
+        print ret.grid
+        return ret 
+

@@ -37,7 +37,9 @@ class Agent(object):
             alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
-                # print "Pre state is {}".format(tetris.State(tetris.shape_list[tetris.turn].type))
+                pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
+                print "Heuristic value of {} is {} and the config is {}".format(pre_state, pre_state.to_config().heuristic_value(), pre_state.to_config())
+                pre_state.to_config
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
@@ -64,6 +66,7 @@ class Agent(object):
                 print tetris.shape_list[tetris.turn]
                 print tetris
                 print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
+
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
         self.query_count += 1
