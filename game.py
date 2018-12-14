@@ -220,10 +220,9 @@ class Configuration(Grid):
         }
         return switcher.get(line, 0)
 
-    def heuristic_value(self):
+    def bumpiness(self):
         (al,_height) = self.active_layer()
         return sum([i**2 for i in al])        
-
 
 class Tetris(Configuration, Shapes):
     def __init__(self, width, height, infinite, type_list):

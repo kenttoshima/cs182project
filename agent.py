@@ -37,9 +37,9 @@ class Agent(object):
             alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
-                pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
-                print "Heuristic value of {} is {} and the config is {}".format(pre_state, pre_state.to_config().heuristic_value(), pre_state.to_config())
-                pre_state.to_config
+                #pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
+                #print "bumpiness of {} is {} and the config is {}".format(pre_state, pre_state.to_config().bumpiness(), pre_state.to_config())
+                #pre_state.to_config
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]

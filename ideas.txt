@@ -1,0 +1,40 @@
+rate each action by its optimality. 
+focus more on the optimality of each action
+move reduce the number of blocks left to be filled in a row 
+less discretized 
+
+
+bumpiness := difference in height of consecutive columns 
+want to reward 
+
+Use human intelligence more?? 
+
+Sample q values from dataset 
+
+
+
+Get the game to continue forever 
+
+
+
+ 
+heuristic: what is bumpiness how to evaluate  
+- Maybe calculate the number of surfaces it touches 
+how many edges the shape touches when fallen
+
+
+Reward: how many is it touching? 
+
+
+
+approximate q learning: what is f1, f2, ...
+
+
+Approximate local vs global. one F considers local
+one f considers global 
+
+
+combine two views: global and local
+	local: width limited view
+	global: height limited view 
+	

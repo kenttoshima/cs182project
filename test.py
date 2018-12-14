@@ -19,7 +19,6 @@ if __name__ == '__main__':
         if value != 0.:
             state, action = key
             print str(state) + ", " + str(action) + ": " + str(value)
-
 #    for key in sorted(agent.qvalues, key=agent.qvalues.__getitem__):
 #        if agent.qvalues[key] != 0.:
 #            state, action = key
