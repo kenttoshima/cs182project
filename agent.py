@@ -1,3 +1,7 @@
+########################
+#### LEARNING AGENT ####
+########################
+
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 from random import random, choice
 
@@ -37,9 +41,9 @@ class Agent(object):
             alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
-                pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
-                print "Heuristic value of {} is {} and the config is {}".format(pre_state, pre_state.to_config().heuristic_value(), pre_state.to_config())
-                pre_state.to_config
+                #pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
+                #print "bumpiness of {} is {} and the config is {}".format(pre_state, pre_state.to_config().bumpiness(), pre_state.to_config())
+                #pre_state.to_config
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
@@ -149,3 +153,22 @@ class Agent(object):
         plt.plot(mean_sum)
         plt.plot(additional_plt)
         plt.show()
+
+    # takes in 2 configs and return how many edges the fallen object touches the original grid
+    def contact(self, preConfig, config):
+        cord_list = []
+        for ridx in range(config.height):
+            for cidx in range(config.width):
+                if config.cell(ridx, cidx) - preConfig.cell(ridx, cidx) > 0:
+                    cord_list.append((ridx, cidx))
+        neighbor_list = []
+        for (r, c) in cord_list:
+            if not r - 1 < 0 and not (r - 1, c) in cord_list:
+                neighbor_list.append((r - 1, c))
+            if r + 1 < config.height and not (r + 1, c) in cord_list:
+                neighbor_list.append((r + 1, c))
+            if not c - 1 < 0 and not (r, c - 1) in cord_list:
+                neighbor_list.append((r, c - 1))
+            if c + 1 < config.width and not (r, c + 1) in cord_list:
+                neighbor_list.append((r, c + 1))
+        return len(filter(lambda (r, c) : config.cell(r, c) != 0, neighbor_list))

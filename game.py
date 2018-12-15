@@ -96,7 +96,7 @@ class Grid(object):
     def active_layer(self):
         return map(lambda x: x - min(self.active_y()), self.active_y()), min(self.active_y())
 
-    # TODO: count number of holes
+    # count number of holes
     def hole(self):
         cntr = 0
         for cidx, colHeight in enumerate(self.active_y()):
@@ -220,10 +220,9 @@ class Configuration(Grid):
         }
         return switcher.get(line, 0)
 
-    def heuristic_value(self):
+    def bumpiness(self):
         (al,_height) = self.active_layer()
-        return sum([i**2 for i in al])        
-
+        return sum([i**2 for i in al])
 
 class Tetris(Configuration, Shapes):
     def __init__(self, width, height, infinite, type_list):
@@ -331,11 +330,10 @@ class State(object):
 
     def to_config(self):
         width = len(self.active_layer)
-        height = max(self.active_layer) + 4 
+        height = max(self.active_layer) + 4
         ret = Configuration(width=width, height=height)
         ret.grid = [[1 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
         print ret.grid
         ret.grid = ret.grid[::-1]
         print ret.grid
-        return ret 
-
+        return ret
