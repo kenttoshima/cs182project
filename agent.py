@@ -4,6 +4,7 @@
 
 from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
 from random import random, choice
+from math import exp
 
 LEARNING_RATE_DECAY = 0.95
 EPSILON_DECAY = 0.98
@@ -157,8 +158,10 @@ class Agent(object):
         plt.plot(additional_plt)
         plt.show()
 
+""" possible heuristics """
+
     # takes in (config before a move, config after a move)
-    # return how many edges the fallen shape touches original config
+    # return how many edges the fallen shape touches in original config
     # does messy operations but works fine
     def contact(self, preConfig, config):
         cord_list = []
@@ -177,3 +180,6 @@ class Agent(object):
             if c + 1 < config.width and not (r, c + 1) in cord_list:
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : config.cell(r, c) != 0, neighbor_list))
+
+    def line_fill(self, preConfig, config):
+        pass
