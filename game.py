@@ -107,6 +107,16 @@ class Grid(object):
                 colHeight -= 1
         return cntr
 
+    # return the number of holes in a given index of row
+    # whether accessible or not
+    def hole_by_row(self, y):
+        cntr = 0
+        ridx = self.cord(y=y)[0]
+        for cidx in range(self.width):
+            if self.cell(ridx, cidx) == 0:
+                cntr += 1
+        return cntr
+
     # add given shape to given coordinate on down_left point. Should not call upon playing game.
     def add_shape(self, shape, x, y):
         idx_r, idx_c = self.cord(x, y)
