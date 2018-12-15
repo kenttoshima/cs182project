@@ -158,7 +158,7 @@ class Agent(object):
         plt.plot(additional_plt)
         plt.show()
 
-""" possible heuristics """
+# possible heuristics
 
     # takes in (config before a move, config after a move)
     # return how many edges the fallen shape touches in original config
@@ -181,10 +181,12 @@ class Agent(object):
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : config.cell(r, c) != 0, neighbor_list))
 
+    # the deeper the line is filled, the higher the value
+    # the closer the line is completed, the higher the valued
     def line_fill(self, preConfig, config):
         sum = 0.
         for y in range(1, config.height):
-            add = self.negexp(config.hole_by_row(y)) - self.negexp(preConfig.hole_by_row(y))
+            add = self.negexp(config.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
             sum += self.negexp(y) * add
         return sum
 

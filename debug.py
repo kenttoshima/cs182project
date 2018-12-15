@@ -29,6 +29,6 @@ conf3.fall(s[nextfalltype], 2)
 agent = Agent()
 print conf1
 print conf2
-print agent.linefill(conf1, conf2)
+print agent.line_fill(conf1, conf2)
 print conf3
-print agent.linefill(conf1, conf3)
+print agent.line_fill(conf1, conf3)

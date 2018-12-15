@@ -107,9 +107,9 @@ class Grid(object):
                 colHeight -= 1
         return cntr
 
-    # return the number of holes in a given index of row
+    # return the number of blanks in a given index of row
     # whether accessible or not
-    def hole_by_row(self, y):
+    def blank_by_row(self, y):
         cntr = 0
         ridx = self.cord(y=y)[0]
         for cidx in range(self.width):
