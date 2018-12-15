@@ -125,11 +125,14 @@ class Agent(object):
     # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):
         successor_list = self.getSuccessor(tetris)
+        # if there is no possible valid move, return vanilla action
         if not successor_list:
             nextAction = Action(1, 0)
+        # flipping a coin to decide if we explore random action
         elif not random() < epsilon:
             (state, nextAction) = choice(successor_list)
             _qvalue = self.query((state, nextAction))
+        # if we don't explore return current optimal move based on qvalue
         else:
             nextAction = self.computeActionFromQvalues(successor_list)
         return nextAction
@@ -154,7 +157,9 @@ class Agent(object):
         plt.plot(additional_plt)
         plt.show()
 
-    # takes in 2 configs and return how many edges the fallen object touches the original grid
+    # takes in (config before a move, config after a move)
+    # return how many edges the fallen shape touches original config
+    # does messy operations but works fine
     def contact(self, preConfig, config):
         cord_list = []
         for ridx in range(config.height):
