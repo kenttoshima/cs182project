@@ -182,4 +182,8 @@ class Agent(object):
         return len(filter(lambda (r, c) : config.cell(r, c) != 0, neighbor_list))
 
     def line_fill(self, preConfig, config):
-        pass
+        for y in range(1, config.height):
+            _var = self.negexp(config.hole_by_row(y)) - self.negexp(preConfig.hole_by_row(y))
+
+    def negexp(self, x):
+        return exp(x * -1.)
