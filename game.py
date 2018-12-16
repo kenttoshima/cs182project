@@ -322,8 +322,7 @@ class Action(object):
 # abstract state for agent usage
 class State(object):
     def __init__(self, config, shape_type):
-        self.active_layer, base_height = config.active_layer()
-        #self.base_zone = int(base_height / (config.height / 3.0)) + 1
+        self.config = config
         self.nextShapeType = shape_type
 
     def __eq__(self, other):
