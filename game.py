@@ -69,6 +69,14 @@ class Grid(object):
         string += "\n"
         return string
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        elif type(self) != type(other):
+            return False
+        else:
+            return self.grid == other.grid
+
     # return (row, column) on given (x, y) coordinate
     def cord(self, x = 0, y = 0):
         return self.height - y, x - 1
@@ -338,17 +346,7 @@ class State(object):
             return False
         else:
             #return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
-            return self.active_layer == other.active_layer and self.nextShapeType == other.nextShapeType
+            return self.config.grid == other.config.grid and self.nextShapeType == other.nextShapeType
     def __str__(self):
         #return str((self.active_layer, self.base_zone, self.nextShapeType))
-        return str((self.active_layer, self.nextShapeType))
-
-    def to_config(self):
-        width = len(self.active_layer)
-        height = max(self.active_layer) + 4
-        ret = Configuration(width=width, height=height)
-        ret.grid = [[1 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
-        # print ret.grid
-        ret.grid = ret.grid[::-1]
-        # print ret.grid
-        return ret
+        return str((self.config.grid, self.nextShapeType))
