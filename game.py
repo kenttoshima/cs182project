@@ -107,7 +107,7 @@ class Grid(object):
                 colHeight -= 1
         return cntr
 
-    # return the number of blanks in a given index of row
+    # return the number of blanks in a row of given y
     # whether accessible or not
     def blank_by_row(self, y):
         cntr = 0

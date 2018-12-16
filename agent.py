@@ -160,7 +160,7 @@ class Agent(object):
 
 # possible heuristics
 
-    # takes in (config before a move, config after a move)
+    # takes in tuple: (config before a move, config after a move)
     # return how many edges the fallen shape touches in original config
     # does messy operations but works fine
     def contact(self, preConfig, config):
