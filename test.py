@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from agent import Agent
-    agent = Agent(width = 4, height = 6, delay = 1, learning_rate = (.25,5000), epsilon = .3)
+    agent = Agent(width = 4, height = 6, delay = 1, learning_rate = (.25,5000), exploration_eagerness = 500)
     stop = input("How many times do you want to learn?: ")
 
     display_times = [100, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 125000, 150000, 175000, 200000]
@@ -9,13 +9,16 @@ if __name__ == '__main__':
     for i in range(stop):
         agent.learn()
         query_hit_rate.append( (agent.query_hit*1.0)/agent.query_count )
-        # if(i in display_times):
-        #     print i 
-        #     print len([1 for key in agent.qvalues if (len(agent.q_val_history[key]) > 1) ])
-        #     print sum(query_hit_rate)/float(len(query_hit_rate))
-        #     agent.plotresults([500*j for j in query_hit_rate])
-    for key in agent.qvalues:
-        print key + "\t" + str(agent.qvalues[key])
+        if(i in display_times):
+            print i 
+            print len([1 for key in agent.qvalues if (len(agent.q_val_history[key]) > 1) ])
+            print sum(query_hit_rate)/float(len(query_hit_rate))
+            agent.plotresults([500*j for j in query_hit_rate])
+    # for key in agent.qvalues:
+    #     print key + "\t" + str(agent.qvalues[key])
+
+    for item in agent.results:
+        print item 
 
 
     # for key in agent.qvalues:

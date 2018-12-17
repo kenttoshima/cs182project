@@ -6,7 +6,6 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 from math import exp
 
-EPSILON_DECAY = 0.9999
 GAMMA = 0.9
 
 #weights
@@ -21,12 +20,12 @@ def convert_key(key):
 
 
 class Agent(object):
-    def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), epsilon = 0.8):
+    def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), exploration_eagerness = 500):
         self.width = width
         self.height = height
         self.delay = delay
         self.learning_rate = learning_rate #For any given iteration of learning, alpha = (learning_rate[0]*learning_rate[1])/(learning_rate[1] + iter)
-        self.epsilon = epsilon
+        self.exploration_eagerness = exploration_eagerness #A "bonus" added to the Q-value for being unexplored 
         self.learning_no = 0
         self.qvalues = {}
         self.q_val_history = {}
@@ -57,18 +56,16 @@ class Agent(object):
         self.query_hit = 0
         self.learning_no += 1
         alpha = (self.learning_rate[0]*self.learning_rate[1])/(self.learning_rate[1] + self.learning_no)
-        epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
         while True:
             tetris.next_turn()
             # print "-=-=-= NEW MOVE =-=-=-"
             # print tetris.shape_list[tetris.turn]
             # print tetris
-            nextAction = self.getAction(tetris, epsilon)
+            nextAction = self.getAction(tetris, epsilon = 0) #Since we are already using an exploration function, there is no longer need to randomize exploration
             # print "-=-=-= NEXT ACTION {} =-=-=-".format(nextAction)
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
-            epsilon *= EPSILON_DECAY
             try:
                 pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
                 #print "bumpiness of {} is {} and the config is {}".format(pre_state, pre_state.to_config().bumpiness(), pre_state.to_config())
@@ -168,12 +165,23 @@ class Agent(object):
         self.query_hit = (self.query_hit + 1 ) if len(self.q_val_history[convert_key(key)]) > 1 else (self.query_hit)
         return val
 
+    #Tells how many times a particular q-value has been written to, including the time it was initialized
+    def num_hits(self, key):
+        if convert_key(key) not in self.q_val_history:
+            return 1
+        else:
+            return len(self.q_val_history[convert_key(key)])
+
+    #adds a particular bonus to a q-value for being unexplored
+    def exploration_function(self, q, n): 
+        return q + float(self.exploration_eagerness)/float(n)
+
     # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
         # print "The following move has reward of {}".format(updateValue)
         # (state_, action_) = key 
         # state_.vis_state_action(action_)
-        next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
+        next_qvals = [self.exploration_function(self.query((next_state, a)), self.num_hits((next_state, a)) )for a in actions_prime]
         max_next = GAMEOVER_PENALTY if (len(next_qvals) == 0) else max(next_qvals)
 
         self.qvalues[convert_key(key)] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
