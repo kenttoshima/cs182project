@@ -88,9 +88,13 @@ class Agent(object):
                     reward = self.reward(prev_turn, 1, tetris, False)
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
             except GameOverError:
-                for turn_offset in range(1, 1 + self.delay):
-                    if tetris.turn - turn_offset > 0:
-                        reward = self.reward(tetris.turn - turn_offset, tetris, True)
+                # for turn_offset in range(1, 1 + self.delay):
+                #     if tetris.turn - turn_offset > 0:
+                #         reward = self.reward(tetris.turn - turn_offset, tetris, True)
+                if prev_turn > 0:
+                    reward = self.reward(prev_turn, 1, tetris, True)
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
+
                 # print ""
                 # print str(self.learning_no) + "th learning"
                 # print tetris
