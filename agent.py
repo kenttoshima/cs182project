@@ -249,12 +249,30 @@ class Agent(object):
     def negexp(self, x):
         return exp(x * -1.)
 
-    def appQ_contact(self, state, action):
-        preConfig = state.config
+class ApproxQLearnAgent(object):
+    def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
+        self.width = width
+        self.height = height
+        self.delay = delay
+        self.alpha = alpha
+        self.epsilon = epsilon
+        self.learning_no = 0
+        self.results = []
+        self.weight = []
+
+    def negexp(self, x):
+        return exp(x * -1.)
+
+    def transition(self, state, action):
+        preconfig = state.config
         postConfig = Configuration(state.config.width, state.config.height)
         actionX, actionRotation = action
         postConfig.copyGrid(state.config)
         postConfig.fall(actionX, actionRotation)
+        return preconfig, postConfig
+
+    def approxQ_contact(self, state, action):
+        preConfig, postConfig = self.transition(state, action)
         cord_list = []
         for ridx in range(postConfig.height):
             for cidx in range(postConfig.width):
@@ -272,5 +290,14 @@ class Agent(object):
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
 
-    def appQ_holes(self, state, action):
-        pass
+    def approxQ_holes(self, state, action):
+        preConfig, postConfig = self.transition(state, action)
+        return postConfig.hole() - preConfig.hole()
+
+    def approxQ_fill(self, state, action):
+        preConfig, postConfig = self.transition(state, action)
+        sum = 0.
+        for y in range(1, postConfig.height + 1):
+            add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
+            sum += self.negexp(y) * add
+        return sum
