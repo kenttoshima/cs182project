@@ -278,30 +278,33 @@ class ApproxQLearnAgent(object):
                 pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
-                actions_prime = [action for (state, action) in self.getSuccessor(tetris)]
+                actions_prime = [action for (_state, action) in self.getSuccessor(tetris)]
                 if delay_turn > 0:
                     reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
-                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
+                    self.weightUpdate(pre_state, nextAction, reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
                 if prev_turn > 0:
                     reward = self.reward(prev_turn, tetris, False)
-                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
+                    self.weightUpdate(pre_state, nextAction, reward, alpha, state_prime, actions_prime)
             except GameOverError:
                 for turn_offset in range(1, 1 + self.delay):
                     if tetris.turn - turn_offset > 0:
                         reward = self.reward(tetris.turn - turn_offset, tetris, True)
-                # print ""
-                # print str(self.learning_no) + "th learning"
-                # print tetris
+                        self.weightUpdate(pre_state, nextAction, reward, alpha, state_prime, actions_prime)
+                print ""
+                print str(self.learning_no) + "th learning"
+                print tetris
+                print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
 
-                # print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
                 self.results.append(tetris.score)
                 break
 
-            # if(debug):
-            #     print ""
-            #     print tetris.shape_list[tetris.turn]
-            #     print tetris
-            #     print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
+    # update Q-value based on alpha
+    def weightUpdate(self, state, action, reward, alpha, next_state, actions_prime):
+        max_next_qvals = max([self.computeQvalue(next_state, a) for a in actions_prime])
+        difference = r + GAMMA * max_next_qvals - self.computeQvalue(state, action)
+        self.weight[0] = self.weight[0] + alpha * difference * self.contact(state, action)
+        self.weight[1] = self.weight[1] + alpha * difference * self.hole(state, action)
+        self.weight[2] = self.weight[2] + alpha * difference * self.fill(state, action)
 
     # return a list of successor of the game
     def getSuccessor(self, tetris):
@@ -356,13 +359,11 @@ class ApproxQLearnAgent(object):
             return GAMEOVER_PENALTY
         else:
             past_score = tetris.history[turn][1]
-            past_holes = tetris.history[turn][2]
             score_change = tetris.score - past_score
-            holes_change = tetris.num_holes - past_holes
-            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change
+            return SCORE_WEIGHT*score_change
 
     """ features """
-
+    # w[0] feature
     def contact(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         cord_list = []
@@ -382,10 +383,12 @@ class ApproxQLearnAgent(object):
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
 
+    # w[1] feature
     def hole(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         return postConfig.hole() - preConfig.hole()
 
+    # w[2] feature
     def fill(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         sum = 0.
