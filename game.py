@@ -248,7 +248,6 @@ class Tetris(Configuration, Shapes):
         Shapes.__init__(self, infinite, type_list)
         self.turn = 0
         self.score = 0
-        self.num_holes = 0 #Net number of holes in whole game board
         # history for turn 0: should not be considered
         state = State(self, self.shape_list[self.turn].type)
         action = Action(0, 0)
@@ -290,10 +289,6 @@ class Tetris(Configuration, Shapes):
     def next_turn(self):
         self.turn += 1
         _shape = self.generate(self.turn)
-        # print "turn: " + str(self.turn)
-        # print "next object"
-        # print shape
-        # print self
 
     def shape_lookahead(self):
         return self.generate(self.turn + 1)
@@ -301,14 +296,11 @@ class Tetris(Configuration, Shapes):
     def drop(self, action):
         shape = self.generate(self.turn)
         copyState = State(self, shape.type)
-        self.history.append(((copyState, action), self.score, self.num_holes))
+        self.history.append(((copyState, action), self.score))
         for i in range(action.rotation % 4):
             shape.rotate()
         self.fall(shape, action.x)
-        # print self
         self.score += self.scoring(self.clear())
-        self.num_holes = self.hole()
-        # print "score: " + str(self.score)
 
 # abstract action for tetris
 class Action(object):
