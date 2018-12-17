@@ -149,8 +149,7 @@ class Agent(object):
         successor_list = []
         for i in range(4):
             nextShape.rotate()
-            for i in range(tetris.width):
-                x = i + 1
+            for x in range(1, tetris.width + 1):
                 newConfig = Configuration(tetris.width, tetris.height)
                 newConfig.copyGrid(tetris)
                 old_config = Configuration(tetris.width, tetris.height)
@@ -272,3 +271,6 @@ class Agent(object):
             if c + 1 < postConfig.width and not (r, c + 1) in cord_list:
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
+
+    def appQ_holes(self, state, action):
+        pass
