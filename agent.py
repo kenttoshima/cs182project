@@ -258,7 +258,7 @@ class ApproxQLearnAgent(object):
         self.epsilon = epsilon
         self.learning_no = 0
         self.results = []
-        self.weight = [1., 1., 1.]
+        self.weight = [1., -2., 1000.]
 
     def learn(self, debug = False):
         self.query_count = 0
@@ -269,7 +269,8 @@ class ApproxQLearnAgent(object):
         self.learning_no += 1
         while True:
             tetris.next_turn()
-            nextAction = self.getAction(tetris, epsilon)
+            currentState = State(tetris, tetris.shape_list[tetris.turn].type)
+            nextAction = self.getAction(currentState, epsilon)
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
             alpha *= LEARNING_RATE_DECAY
@@ -278,7 +279,7 @@ class ApproxQLearnAgent(object):
                 pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
-                actions_prime = [action for (_state, action) in self.getSuccessor(tetris)]
+                actions_prime = [action for (_state, action) in self.getSuccessor(state_prime)]
                 if delay_turn > 0:
                     reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
                     self.weightUpdate(pre_state, nextAction, reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
@@ -307,16 +308,16 @@ class ApproxQLearnAgent(object):
         self.weight[2] = self.weight[2] + alpha * difference * self.fill(state, action)
 
     # return a list of successor of the game
-    def getSuccessor(self, tetris):
-        nextShape = tetris.shape_list[tetris.turn]
+    def getSuccessor(self, state):
+        nextShape = Shape(state.nextShapeType)
         successor_list = []
         for i in range(4):
             nextShape.rotate()
-            for x in range(1, tetris.width + 1):
-                newConfig = Configuration(tetris.width, tetris.height)
-                newConfig.copyGrid(tetris)
-                oldConfig = Configuration(tetris.width, tetris.height)
-                oldConfig.copyGrid(tetris)
+            for x in range(1, state.config.width + 1):
+                newConfig = Configuration(state.config.width, state.config.height)
+                newConfig.copyGrid(state.config)
+                oldConfig = Configuration(state.config.width, state.config.height)
+                oldConfig.copyGrid(state.config)
                 try:
                     newConfig.fall(nextShape, x)
                     # if fall is successful then pair that action with config and add to list
@@ -327,8 +328,8 @@ class ApproxQLearnAgent(object):
         return successor_list
 
     # decide action based on epsilon-greedy Q-value iteration
-    def getAction(self, tetris, epsilon):
-        successor_list = self.getSuccessor(tetris)
+    def getAction(self, state, epsilon):
+        successor_list = self.getSuccessor(state)
         if not successor_list:
             nextAction = Action(1, 0)
         # flipping a coin to decide if we explore random action
@@ -403,9 +404,13 @@ class ApproxQLearnAgent(object):
         return exp(x * -1.)
 
     def transition(self, state, action):
-        preconfig = state.config
+        preConfig = state.config
+        fallShape = Shape(state.nextShapeType)
+        for i in range(action.rotation):
+            fallShape.rotate()
         postConfig = Configuration(state.config.width, state.config.height)
-        actionX, actionRotation = action
-        postConfig.copyGrid(state.config)
-        postConfig.fall(actionX, actionRotation)
-        return preconfig, postConfig
+        postConfig.copyGrid(preConfig)
+        print postConfig
+        print fallShape, action.x
+        postConfig.fall(fallShape, action.x)
+        return preConfig, postConfig

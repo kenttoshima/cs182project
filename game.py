@@ -183,7 +183,7 @@ class Shapes(Shape):
     def __init__(self, infinite = True, type_list = []):
         super(Shapes, self).__init__(0)
         self.infinite = infinite
-        self.shape_list = [self] + map(lambda type: Shape(type), type_list)
+        self.shape_list = [self] + map(lambda shape_type: Shape(shape_type), type_list)
 
     # generate shapes based on given number of turn. Works for both infinite and finite game.
     def generate(self, turn):
