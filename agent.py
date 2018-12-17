@@ -18,9 +18,22 @@ def convert_key(key):
     state,action = key
     return str(state) + '|' + str(action)
 
+#Takes in a list, and outputs one of moving average of window_size to smooth out the data
+def moving_average(in_list, window_size):
+    ret = []
+    for i in range(len(in_list)-window_size):
+        to_average = in_list[i:i+window_size]
+        ret.append(sum(to_average)/float(window_size))
+    return ret 
+
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), exploration_eagerness = 500):
+        self.HSCORE_WEIGHT = 10
+        self.HHOLE_WEIGHT = -20
+        self.HFIT_WEIGHT = 100
+        self.HBUMPINESS_WEIGHT = -0.5
+        
         self.width = width
         self.height = height
         self.delay = delay
@@ -31,6 +44,9 @@ class Agent(object):
         self.q_val_history = {}
         self.actual_state_action_pair = {} #This dict is a mapping from convert_key(key) back to key. For debugging purposes mainly
         self.results = []
+
+    def edit_weights(self, weights):
+        self.HSCORE_WEIGHT, self.HHOLE_WEIGHT, self.HFIT_WEIGHT, self.HBUMPINESS_WEIGHT = (weights)
 
     #run the game until lose, then return score at the end.
     def play(self):
@@ -43,8 +59,9 @@ class Agent(object):
             try:
                 tetris.drop(nextAction)
             except GameOverError:
-                self.results.append((tetris.score, 100* tetris.turn))
-                return (tetris.score, tetris.turn)
+                self.results.append(tetris.score)
+                #return (tetris.score, tetris.turn)
+                return tetris.score 
             # print ""
             # print tetris.shape_list[tetris.turn]
             # print tetris
@@ -108,11 +125,6 @@ class Agent(object):
     #Heuristic Q value formula: -(change in bumpiness) +(score increase) -(Hole increase) +(shape fit)
     #Flat negative value if it's a game over
     def heuristic_q_val(self, state_action_pair):
-        self.HSCORE_WEIGHT = 10
-        self.HHOLE_WEIGHT = -20
-        self.HFIT_WEIGHT = 100
-        self.HBUMPINESS_WEIGHT = -0.5
-
         (pre_state, action) = state_action_pair
         # print "-----QUERY ON-- {}, {}".format(pre_state, action)
         fall_col = action.x
@@ -149,7 +161,7 @@ class Agent(object):
         # print "post"
         # print str(post_config)
         # print "Holes {};Score {};Contact {};Bumpiness {};Heuristic {}".format(holes_generated, score_increase, num_contact, bumpiness_change, weighted_heuristic)
-        return 0
+        #return 0
         return weighted_heuristic
 
 
@@ -248,17 +260,18 @@ class Agent(object):
             valueList.append((self.query(successor), successor[1]))
         return max(valueList, key = lambda x : x[0])[1]
 
-    # plotting the learning result
+    
+
+
+
+
+    # plotting the scores as a moving average
     def plotresults(self, additional_plt):
-        # mean_sum = []
-        # sumsofar = 0
-        # for i, score in enumerate(self.results):
-        #     sumsofar += score
-        #     mean_sum.append(sumsofar / float((i + 1)))
+        WINDOW_SIZE = 200
         import matplotlib.pyplot as plt
-        plt.plot(self.results)
+        plt.plot(moving_average(self.results, 200))
         # plt.plot(mean_sum)
-        plt.plot(additional_plt)
+        plt.plot(moving_average(additional_plt, 200))
         plt.show()
 
 # possible heuristics

@@ -37,4 +37,26 @@ one f considers global
 combine two views: global and local
 	local: width limited view
 	global: height limited view 
-	
+
+
+https://www.youtube.com/watch?v=yNeSFbE1jdY 12:04 
+Exploration functions 
+
+Favor state action pairs for which we have not much information.
+
+gamma max_a' f(Q(s',a'), N(s',a')) where f (u,n) = u + k/n
+
+Hand tuned heuristic: (Heuristic of a heuristic)
+        self.HSCORE_WEIGHT = 
+        self.HHOLE_WEIGHT = -20
+        self.HFIT_WEIGHT = 100
+        self.HBUMPINESS_WEIGHT = -0.5
+
+Best genes so far: 
+ORIGINAL ([0.09758884552979795, -0.1951776910595959, 0.9758884552979795, -0.004879442276489898], 28140)
+
+From genes derived from relatives of the handcrafted gene:
+([0.12532512049902608, -0.2782478946086941, 0.9522837411471717, -0.005234468882332213], 34540)
+([0.11997937136054673, -0.25073322997993325, 0.9605757988900988, -0.005650877666919277], 34120)
+([0.15735916754411347, -0.374140035202208, 0.9139094426685311, -0.005182378798295332], 33300)
+([0.07317127234662979, -0.13248930012843751, 0.9884730794876806, -0.003677143292523085], 34420)
