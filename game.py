@@ -364,5 +364,4 @@ class State(object):
             shape_to_play.rotate()
         config.add_shape(shape_to_play, col, config.height-shape_to_play.shapeHeight+1)
         print "Visualized:"
-        print str(shape_to_play)
         print str(config)

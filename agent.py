@@ -30,6 +30,7 @@ class Agent(object):
         self.learning_no = 0
         self.qvalues = {}
         self.q_val_history = {}
+        self.actual_state_action_pair = {} #This dict is a mapping from convert_key(key) back to key. For debugging purposes mainly
         self.results = []
 
     #run the game until lose, then return score at the end.
@@ -148,6 +149,7 @@ class Agent(object):
         # print "post"
         # print str(post_config)
         # print "Holes {};Score {};Contact {};Bumpiness {};Heuristic {}".format(holes_generated, score_increase, num_contact, bumpiness_change, weighted_heuristic)
+        return 0
         return weighted_heuristic
 
 
@@ -157,6 +159,7 @@ class Agent(object):
         if convert_key(key) not in self.qvalues:
             self.qvalues[convert_key(key)] = self.heuristic_q_val(key)
             self.q_val_history[convert_key(key)] = [self.qvalues[convert_key(key)]]
+            self.actual_state_action_pair[convert_key(key)] = key
 
         val = self.qvalues[convert_key(key)]
         self.query_hit = (self.query_hit + 1 ) if len(self.q_val_history[convert_key(key)]) > 1 else (self.query_hit)
