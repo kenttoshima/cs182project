@@ -17,7 +17,7 @@ LIVING_REWARD = 100
 
 def convert_key(key):
     state,action = key
-    return str(state) + str(action)
+    return str(state) + '|' + str(action)
 
 
 class Agent(object):

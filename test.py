@@ -9,14 +9,15 @@ if __name__ == '__main__':
     for i in range(stop):
         agent.learn()
         query_hit_rate.append( (agent.query_hit*1.0)/agent.query_count )
-        if(i in display_times):
-            print i 
-            print len([1 for key in agent.qvalues if (len(agent.q_val_history[key]) > 1) ])
-            print sum(query_hit_rate)/float(len(query_hit_rate))
-            agent.plotresults([500*j for j in query_hit_rate])
+        # if(i in display_times):
+        #     print i 
+        #     print len([1 for key in agent.qvalues if (len(agent.q_val_history[key]) > 1) ])
+        #     print sum(query_hit_rate)/float(len(query_hit_rate))
+        #     agent.plotresults([500*j for j in query_hit_rate])
+    for key in agent.qvalues:
+        print key + "\t" + str(agent.qvalues[key])
 
-    for item in agent.results:
-        print item 
+
     # for key in agent.qvalues:
     #     qvals = agent.q_val_history[key]
     #     if(len(qvals) > 1):
