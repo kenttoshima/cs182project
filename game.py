@@ -198,6 +198,12 @@ class Configuration(Grid):
     def __init__(self, width, height):
         super(Configuration, self).__init__(width, height)
 
+    def copy(self):
+        new_grid_arr = [x[:] for x in self.grid]
+        new_config = Configuration(self.width, self.height)
+        new_config.grid = new_grid_arr
+        return new_config
+
     # drop given shape on grid at given x coordinate
     def fall(self, shape, x):
         if x < 1 or x - 1 + shape.shapeWidth > self.width:
@@ -333,4 +339,19 @@ class State(object):
         else:
             return self.config.grid == other.config.grid and self.nextShapeType == other.nextShapeType
     def __str__(self):
+<<<<<<< HEAD
         return str((self.config.grid, self.nextShapeType))
+=======
+        #return str((self.active_layer, self.base_zone, self.nextShapeType))
+        return str((self.active_layer, self.nextShapeType))
+
+    def to_config(self):
+        width = len(self.active_layer)
+        height = max(self.active_layer) + 4
+        ret = Configuration(width=width, height=height)
+        ret.grid = [[1 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
+        # print ret.grid
+        ret.grid = ret.grid[::-1]
+        # print ret.grid
+        return ret
+>>>>>>> mdp-agent
