@@ -36,6 +36,8 @@ class Agent(object):
         self.learning_no += 1
         while True:
             tetris.next_turn()
+            # print tetris.shape_list[tetris.turn]
+            # print tetris
             nextAction = self.getAction(tetris, epsilon)
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
@@ -46,9 +48,6 @@ class Agent(object):
                 #print "bumpiness of {} is {} and the config is {}".format(pre_state, pre_state.to_config().bumpiness(), pre_state.to_config())
                 #pre_state.to_config
                 tetris.drop(nextAction)
-
-                self.heuristic_q_val((pre_state,nextAction))
-
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
                 if delay_turn > 0:
@@ -69,11 +68,11 @@ class Agent(object):
                 self.results.append(tetris.score)
                 break
 
-            if(debug):
-                print ""
-                print tetris.shape_list[tetris.turn]
-                print tetris
-                print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
+            # if(debug):
+            #     print ""
+            #     print tetris.shape_list[tetris.turn]
+            #     print tetris
+            #     print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
 
 
     #Heuristic Q value formula: -(change in bumpiness) +(score increase) -(Hole increase) +(shape fit)
@@ -81,11 +80,12 @@ class Agent(object):
     def heuristic_q_val(self, state_action_pair):
         GAMEOVER_HEURISTIC_VAL = -1000
         SCORE_WEIGHT = 1
-        HOLE_WEIGHT = -150
+        HOLE_WEIGHT = -1500
         FIT_WEIGHT = 10
         BUMPINESS_WEIGHT = -0.05
 
         (pre_state, action) = state_action_pair
+        #print "-----QUERY ON-- {}, {}".format(pre_state, action)
         fall_col = action.x
         fall_rot = action.rotation
         shape_to_fall = Shape(pre_state.nextShapeType)
@@ -152,10 +152,12 @@ class Agent(object):
                 x = i + 1
                 newConfig = Configuration(tetris.width, tetris.height)
                 newConfig.copyGrid(tetris)
+                old_config = Configuration(tetris.width, tetris.height)
+                old_config.copyGrid(tetris)
                 try:
                     newConfig.fall(nextShape, x)
                     # def of successor = (action, (active layer, height of baseline))
-                    successor_list.append((State(newConfig, nextShape.type), (Action(x, nextShape.rotation))))
+                    successor_list.append((State(old_config, nextShape.type), (Action(x, nextShape.rotation))))
                 except (InvalidMoveError, GameOverError):
                     pass
         # if successor_list is empty, meaning gameover in the next turn
@@ -176,11 +178,13 @@ class Agent(object):
     # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):
         successor_list = self.getSuccessor(tetris)
+        # for item in successor_list:
+        #     print "state {} action {}".format(item[0],item[1])  
         # if there is no possible valid move, return vanilla action
         if not successor_list:
             nextAction = Action(1, 0)
         # flipping a coin to decide if we explore random action
-        elif not random() < epsilon:
+        elif (random() < epsilon) :
             (state, nextAction) = choice(successor_list)
             _qvalue = self.query((state, nextAction))
         # if we don't explore return current optimal move based on qvalue
@@ -190,10 +194,12 @@ class Agent(object):
 
     # return action from given successor list based on Q-value
     def computeActionFromQvalues(self, successor_list):
+        #print "computing action from qvals {}".format(len(successor_list))
         valueList = []
         for successor in successor_list:
+            #print "Doing q-value query for: {}".format(str(successor[1]))
             valueList.append((self.query(successor), successor[1]))
-            return max(valueList, key = lambda x : x[0])[1]
+        return max(valueList, key = lambda x : x[0])[1]
 
     # plotting the learning result
     def plotresults(self, additional_plt):
