@@ -258,20 +258,112 @@ class ApproxQLearnAgent(object):
         self.epsilon = epsilon
         self.learning_no = 0
         self.results = []
-        self.weight = []
+        self.weight = [1., 1., 1.]
 
-    def negexp(self, x):
-        return exp(x * -1.)
+    def learn(self, debug = False):
+        self.query_count = 0
+        self.query_hit = 0
+        alpha = self.alpha
+        epsilon = self.epsilon
+        tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
+        self.learning_no += 1
+        while True:
+            tetris.next_turn()
+            nextAction = self.getAction(tetris, epsilon)
+            prev_turn = tetris.turn - 1
+            delay_turn = tetris.turn - self.delay
+            alpha *= LEARNING_RATE_DECAY
+            epsilon *= EPSILON_DECAY
+            try:
+                pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
+                tetris.drop(nextAction)
+                state_prime = State(tetris, tetris.shape_lookahead().type)
+                actions_prime = [action for (state, action) in self.getSuccessor(tetris)]
+                if delay_turn > 0:
+                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
+                    self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
+                if prev_turn > 0:
+                    reward = self.reward(prev_turn, tetris, False)
+                    self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
+            except GameOverError:
+                for turn_offset in range(1, 1 + self.delay):
+                    if tetris.turn - turn_offset > 0:
+                        reward = self.reward(tetris.turn - turn_offset, tetris, True)
+                # print ""
+                # print str(self.learning_no) + "th learning"
+                # print tetris
 
-    def transition(self, state, action):
-        preconfig = state.config
-        postConfig = Configuration(state.config.width, state.config.height)
-        actionX, actionRotation = action
-        postConfig.copyGrid(state.config)
-        postConfig.fall(actionX, actionRotation)
-        return preconfig, postConfig
+                # print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
+                self.results.append(tetris.score)
+                break
 
-    def approxQ_contact(self, state, action):
+            # if(debug):
+            #     print ""
+            #     print tetris.shape_list[tetris.turn]
+            #     print tetris
+            #     print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
+
+    # return a list of successor of the game
+    def getSuccessor(self, tetris):
+        nextShape = tetris.shape_list[tetris.turn]
+        successor_list = []
+        for i in range(4):
+            nextShape.rotate()
+            for x in range(1, tetris.width + 1):
+                newConfig = Configuration(tetris.width, tetris.height)
+                newConfig.copyGrid(tetris)
+                oldConfig = Configuration(tetris.width, tetris.height)
+                oldConfig.copyGrid(tetris)
+                try:
+                    newConfig.fall(nextShape, x)
+                    # if fall is successful then pair that action with config and add to list
+                    successor_list.append((State(oldConfig, nextShape.type), (Action(x, nextShape.rotation))))
+                except (InvalidMoveError, GameOverError):
+                    pass
+        # if successor_list is empty, meaning gameover in the next turn
+        return successor_list
+
+    # decide action based on epsilon-greedy Q-value iteration
+    def getAction(self, tetris, epsilon):
+        successor_list = self.getSuccessor(tetris)
+        if not successor_list:
+            nextAction = Action(1, 0)
+        # flipping a coin to decide if we explore random action
+        elif random() < epsilon:
+            _state, nextAction = choice(successor_list)
+        # if we don't explore return current optimal move based on qvalue
+        else:
+            nextAction = self.computeActionFromQvalues(successor_list)
+        return nextAction
+
+    # return action from given successor list based on Q-value
+    def computeActionFromQvalues(self, successor_list):
+        value_list = []
+        for successor in successor_list:
+            state, action = successor
+            value = self.computeQvalue(state, action)
+            value_list.append((value, successor[1]))
+        return max(value_list, key = lambda x : x[0])[1]
+
+    # compute Q(s,a) on given s = state, a = action
+    def computeQvalue(self, state, action):
+        return self.weight[0] * self.contact(state, action) + self.weight[1] * self.hole(state, action) + self.weight[2] * self.fill(state, action)
+
+    # return reward on given game and turn you want to calculate the score increase
+    # if isGameOver == True, then return gameover penalty
+    def reward(self, turn, tetris, isGameOver):
+        if isGameOver:
+            return GAMEOVER_PENALTY
+        else:
+            past_score = tetris.history[turn][1]
+            past_holes = tetris.history[turn][2]
+            score_change = tetris.score - past_score
+            holes_change = tetris.num_holes - past_holes
+            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change
+
+    """ features """
+
+    def contact(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         cord_list = []
         for ridx in range(postConfig.height):
@@ -290,14 +382,27 @@ class ApproxQLearnAgent(object):
                 neighbor_list.append((r, c + 1))
         return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
 
-    def approxQ_holes(self, state, action):
+    def hole(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         return postConfig.hole() - preConfig.hole()
 
-    def approxQ_fill(self, state, action):
+    def fill(self, state, action):
         preConfig, postConfig = self.transition(state, action)
         sum = 0.
         for y in range(1, postConfig.height + 1):
             add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
             sum += self.negexp(y) * add
         return sum
+
+    """ utilities """
+
+    def negexp(self, x):
+        return exp(x * -1.)
+
+    def transition(self, state, action):
+        preconfig = state.config
+        postConfig = Configuration(state.config.width, state.config.height)
+        actionX, actionRotation = action
+        postConfig.copyGrid(state.config)
+        postConfig.fall(actionX, actionRotation)
+        return preconfig, postConfig
