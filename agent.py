@@ -6,7 +6,6 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 from math import exp
 
-LEARNING_RATE_DECAY = 1
 EPSILON_DECAY = 0.9999
 GAMMA = 0.9
 
@@ -22,11 +21,11 @@ def convert_key(key):
 
 
 class Agent(object):
-    def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
+    def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), epsilon = 0.8):
         self.width = width
         self.height = height
         self.delay = delay
-        self.alpha = alpha
+        self.learning_rate = learning_rate #For any given iteration of learning, alpha = (learning_rate[0]*learning_rate[1])/(learning_rate[1] + iter)
         self.epsilon = epsilon
         self.learning_no = 0
         self.qvalues = {}
@@ -56,10 +55,10 @@ class Agent(object):
     def learn(self, debug = False):
         self.query_count = 0
         self.query_hit = 0
-        alpha = self.alpha
+        self.learning_no += 1
+        alpha = (self.learning_rate[0]*self.learning_rate[1])/(self.learning_rate[1] + self.learning_no)
         epsilon = self.epsilon
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
-        self.learning_no += 1
         while True:
             tetris.next_turn()
             # print "-=-=-= NEW MOVE =-=-=-"
@@ -69,7 +68,6 @@ class Agent(object):
             # print "-=-=-= NEXT ACTION {} =-=-=-".format(nextAction)
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
-            alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
                 pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
