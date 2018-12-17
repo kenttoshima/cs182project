@@ -25,6 +25,7 @@ class Agent(object):
         self.learning_no = 0
         self.qvalues = {}
         self.results = []
+        self.weight = []
 
     # Q value learning function
     def learn(self, debug = False):
@@ -95,16 +96,16 @@ class Agent(object):
         pre_config = pre_state.to_config()
         pre_config_save = pre_config.copy()
         try:
-            pre_config.fall(shape_to_fall, fall_col) 
+            pre_config.fall(shape_to_fall, fall_col)
             holes_generated = pre_config.hole()
-        except GameOverError: 
+        except GameOverError:
             return GAMEOVER_HEURISTIC_VAL #Gives a Flat number Q value if the move fails
         except InvalidMoveError:
             return -1*float('inf')
         post_config = pre_config.copy() #This is the state after executing the fall but before clearing
         score_increase = pre_config.scoring(pre_config.clear())
         post_config_flat = State(pre_config, 0).to_config() #This is the "flattened" version of post_config where lines are cleared and holes are removed (ie. converted to an activelayer, then back)
-        # print str(pre_config_save)        
+        # print str(pre_config_save)
         # print str(post_config)
         # print str(post_config_flat)
         num_contact = self.contact(pre_config_save, post_config)
@@ -156,7 +157,7 @@ class Agent(object):
                 old_config.copyGrid(tetris)
                 try:
                     newConfig.fall(nextShape, x)
-                    # def of successor = (action, (active layer, height of baseline))
+                    # if fall is successful then pair that action with config and add to list
                     successor_list.append((State(old_config, nextShape.type), (Action(x, nextShape.rotation))))
                 except (InvalidMoveError, GameOverError):
                     pass
@@ -179,7 +180,7 @@ class Agent(object):
     def getAction(self, tetris, epsilon):
         successor_list = self.getSuccessor(tetris)
         # for item in successor_list:
-        #     print "state {} action {}".format(item[0],item[1])  
+        #     print "state {} action {}".format(item[0],item[1])
         # if there is no possible valid move, return vanilla action
         if not successor_list:
             nextAction = Action(1, 0)
@@ -248,3 +249,26 @@ class Agent(object):
 
     def negexp(self, x):
         return exp(x * -1.)
+
+    def appQ_contact(self, state, action):
+        preConfig = state.config
+        postConfig = Configuration(state.config.width, state.config.height)
+        actionX, actionRotation = action
+        postConfig.copyGrid(state.config)
+        postConfig.fall(actionX, actionRotation)
+        cord_list = []
+        for ridx in range(postConfig.height):
+            for cidx in range(postConfig.width):
+                if postConfig.cell(ridx, cidx) - preConfig.cell(ridx, cidx) > 0:
+                    cord_list.append((ridx, cidx))
+        neighbor_list = []
+        for (r, c) in cord_list:
+            if not r - 1 < 0 and not (r - 1, c) in cord_list:
+                neighbor_list.append((r - 1, c))
+            if r + 1 < postConfig.height and not (r + 1, c) in cord_list:
+                neighbor_list.append((r + 1, c))
+            if not c - 1 < 0 and not (r, c - 1) in cord_list:
+                neighbor_list.append((r, c - 1))
+            if c + 1 < postConfig.width and not (r, c + 1) in cord_list:
+                neighbor_list.append((r, c + 1))
+        return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
