@@ -257,7 +257,7 @@ class Tetris(Configuration, Shapes):
         # history for turn 0: should not be considered
         state = State(self, self.shape_list[self.turn].type)
         action = Action(0, 0)
-        self.history = [((state, action), self.score, self.num_holes)]
+        self.history = [((state, action), self.score)]
 
     # # run the whole tetris game
     # def run(self):

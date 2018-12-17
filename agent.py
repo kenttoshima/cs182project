@@ -214,7 +214,7 @@ class Agent(object):
         plt.plot(additional_plt)
         plt.show()
 
-# possible heuristics
+    # possible heuristics
 
     # takes in tuple: (config before a move, config after a move)
     # return how many edges the fallen shape touches in original config
@@ -301,7 +301,7 @@ class ApproxQLearnAgent(object):
     # update Q-value based on alpha
     def weightUpdate(self, state, action, reward, alpha, next_state, actions_prime):
         max_next_qvals = max([self.computeQvalue(next_state, a) for a in actions_prime])
-        difference = r + GAMMA * max_next_qvals - self.computeQvalue(state, action)
+        difference = reward + GAMMA * max_next_qvals - self.computeQvalue(state, action)
         self.weight[0] = self.weight[0] + alpha * difference * self.contact(state, action)
         self.weight[1] = self.weight[1] + alpha * difference * self.hole(state, action)
         self.weight[2] = self.weight[2] + alpha * difference * self.fill(state, action)
