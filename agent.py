@@ -8,12 +8,13 @@ from math import exp
 
 LEARNING_RATE_DECAY = 1
 EPSILON_DECAY = 0.9999
-GAMMA = 0.50
+GAMMA = 0.9
 
 #weights
 GAMEOVER_PENALTY = -100
 SCORE_WEIGHT = 10
-HOLE_WEIGHT = -50
+HOLE_WEIGHT = -500
+LIVING_REWARD = 100
 
 def convert_key(key):
     state,action = key
@@ -81,10 +82,10 @@ class Agent(object):
                 #     print str(state)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris, get_future_shape = True)]
                 if delay_turn > 0:
-                    reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
+                    reward = self.reward(delay_turn, self.delay, tetris, False) #reward takes in the old turn number to calculate change
                     self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
                 if prev_turn > 0:
-                    reward = self.reward(prev_turn, tetris, False)
+                    reward = self.reward(prev_turn, 1, tetris, False)
                     self.qvalueUpdate(tetris.history[prev_turn][0], reward, alpha, state_prime, actions_prime)
             except GameOverError:
                 for turn_offset in range(1, 1 + self.delay):
@@ -108,10 +109,10 @@ class Agent(object):
     #Heuristic Q value formula: -(change in bumpiness) +(score increase) -(Hole increase) +(shape fit)
     #Flat negative value if it's a game over
     def heuristic_q_val(self, state_action_pair):
-        self.SCORE_WEIGHT = 10
-        self.HOLE_WEIGHT = -20
-        self.FIT_WEIGHT = 100
-        self.BUMPINESS_WEIGHT = -0.5
+        self.HSCORE_WEIGHT = 10
+        self.HHOLE_WEIGHT = -20
+        self.HFIT_WEIGHT = 100
+        self.HBUMPINESS_WEIGHT = -0.5
 
         (pre_state, action) = state_action_pair
         # print "-----QUERY ON-- {}, {}".format(pre_state, action)
@@ -142,7 +143,7 @@ class Agent(object):
         bumpiness_change = post_config_flat.bumpiness()-pre_config_save.bumpiness()
 
         raw_vals = [holes_generated, score_increase, num_contact, bumpiness_change]
-        weights = [self.HOLE_WEIGHT, self.SCORE_WEIGHT, self.FIT_WEIGHT, self.BUMPINESS_WEIGHT]
+        weights = [self.HHOLE_WEIGHT, self.HSCORE_WEIGHT, self.HFIT_WEIGHT, self.HBUMPINESS_WEIGHT]
         weighted_heuristic =  sum([x*y for x,y in zip(raw_vals,weights)]) #dot product of weights and heuristic values.
         # print "pre"
         # print str(pre_config_save)
@@ -167,13 +168,10 @@ class Agent(object):
 
     # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
+        # print "The following move has reward of {}".format(updateValue)
+        # (state_, action_) = key 
+        # state_.vis_state_action(action_)
         next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
-
-
-        # #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative
-        # #and even one of the q-vals is uninitialized. If we only query initialized q-vals or use a heuristic-initialized Q-vals and more learning, this would not be needed.
-        # filtered_next = filter(lambda x : x != 0, next_qvals)
-        # max_next = max(filtered_next) if (len(filtered_next) > 0) else 0
         max_next = GAMEOVER_PENALTY if (len(next_qvals) == 0) else max(next_qvals)
 
         self.qvalues[convert_key(key)] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
@@ -202,15 +200,17 @@ class Agent(object):
 
     # return reward on given game and turn you want to calculate the score increase
     # if isGameOver == True, then return gameover penalty
-    def reward(self, turn, tetris, isGameOver):
+    def reward(self, turn, forward, tetris, isGameOver):
         if isGameOver:
             return GAMEOVER_PENALTY
         else:
             past_score = tetris.history[turn][1]
             past_holes = tetris.history[turn][2]
-            score_change = tetris.score - past_score
-            holes_change = tetris.num_holes - past_holes
-            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change
+            current_score = tetris.history[turn+forward][1]
+            current_holes = tetris.history[turn+forward][2] 
+            score_change = current_score - past_score
+            holes_change = current_holes - past_holes
+            return SCORE_WEIGHT*score_change + HOLE_WEIGHT*holes_change + LIVING_REWARD
 
     # decide action based on epsilon-greedy Q-value iteration
     def getAction(self, tetris, epsilon):
