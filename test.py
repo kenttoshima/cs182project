@@ -1,6 +1,6 @@
 if __name__ == '__main__':
     from agent import Agent
-    agent = Agent(width = 4, height = 12, delay = 2, alpha = 0.6, epsilon = 0.8)
+    agent = Agent(width = 4, height = 12, delay = 2, alpha = 0, epsilon = 0.8)
     stop = input("How many times do you want to learn?: ")
 
     display_times = [100, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 125000, 150000, 175000, 200000]

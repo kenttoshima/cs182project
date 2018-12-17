@@ -2,7 +2,7 @@
 #### LEARNING AGENT ####
 ########################
 
-from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError
+from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOverError, Shape
 from random import random, choice
 from math import exp
 
@@ -42,10 +42,13 @@ class Agent(object):
             alpha *= LEARNING_RATE_DECAY
             epsilon *= EPSILON_DECAY
             try:
-                #pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
+                pre_state = State(tetris, tetris.shape_list[tetris.turn].type)
                 #print "bumpiness of {} is {} and the config is {}".format(pre_state, pre_state.to_config().bumpiness(), pre_state.to_config())
                 #pre_state.to_config
                 tetris.drop(nextAction)
+
+                self.heuristic_q_val((pre_state,nextAction))
+
                 state_prime = State(tetris, tetris.shape_lookahead().type)
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
                 if delay_turn > 0:
@@ -72,11 +75,58 @@ class Agent(object):
                 print tetris
                 print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
 
+
+    #Heuristic Q value formula: -(change in bumpiness) +(score increase) -(Hole increase) +(shape fit)
+    #Flat negative value if it's a game over
+    def heuristic_q_val(self, state_action_pair):
+        GAMEOVER_HEURISTIC_VAL = -1000
+        SCORE_WEIGHT = 1
+        HOLE_WEIGHT = -150
+        FIT_WEIGHT = 10
+        BUMPINESS_WEIGHT = -0.05
+
+        (pre_state, action) = state_action_pair
+        fall_col = action.x
+        fall_rot = action.rotation
+        shape_to_fall = Shape(pre_state.nextShapeType)
+        for i in range(fall_rot % 4):
+            shape_to_fall.rotate()
+        #Pre_config is the configuration of the state before the action
+        pre_config = pre_state.to_config()
+        pre_config_save = pre_config.copy()
+        try:
+            pre_config.fall(shape_to_fall, fall_col) 
+            holes_generated = pre_config.hole()
+        except GameOverError: 
+            return GAMEOVER_HEURISTIC_VAL #Gives a Flat number Q value if the move fails
+        except InvalidMoveError:
+            return -1*float('inf')
+        post_config = pre_config.copy() #This is the state after executing the fall but before clearing
+        score_increase = pre_config.scoring(pre_config.clear())
+        post_config_flat = State(pre_config, 0).to_config() #This is the "flattened" version of post_config where lines are cleared and holes are removed (ie. converted to an activelayer, then back)
+        # print str(pre_config_save)        
+        # print str(post_config)
+        # print str(post_config_flat)
+        num_contact = self.contact(pre_config_save, post_config)
+        bumpiness_change = post_config_flat.bumpiness()-pre_config_save.bumpiness()
+
+        raw_vals = [holes_generated, score_increase, num_contact, bumpiness_change]
+        weights = [HOLE_WEIGHT, SCORE_WEIGHT, FIT_WEIGHT, BUMPINESS_WEIGHT]
+        weighted_heuristic =  sum([x*y for x,y in zip(raw_vals,weights)])
+        # print "pre"
+        # print str(pre_config_save)
+        # print "post"
+        # print str(post_config)
+        # print "Holes {};Score {};Contact {};Bumpiness {};Heuristic {}".format(holes_generated, score_increase, num_contact, bumpiness_change, weighted_heuristic)
+        return weighted_heuristic
+
+
+
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
         self.query_count += 1
         if key not in self.qvalues:
-            self.qvalues[key] = 0.0
+            self.qvalues[key] = self.heuristic_q_val(key)
         val = self.qvalues[key]
         self.query_hit = (self.query_hit + 1 ) if val != 0.0 else (self.query_hit)
         return val
