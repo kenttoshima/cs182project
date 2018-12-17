@@ -348,8 +348,21 @@ class State(object):
         width = len(self.active_layer)
         height = max(self.active_layer) + 4
         ret = Configuration(width=width, height=height)
-        ret.grid = [[1 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
+        ret.grid = [[9 if (y < self.active_layer[x]) else 0 for x in range(width)] for y in range(height)]
         # print ret.grid
         ret.grid = ret.grid[::-1]
         # print ret.grid
         return ret
+
+    def vis_state_action(self, action):
+        config = self.to_config()
+        shape_type = self.nextShapeType
+        shape_to_play = Shape(shape_type)
+        col = action.x 
+        rot = action.rotation
+        for i in range(rot % 4):
+            shape_to_play.rotate()
+        config.add_shape(shape_to_play, col, config.height-shape_to_play.shapeHeight+1)
+        print "Visualized:"
+        print str(shape_to_play)
+        print str(config)

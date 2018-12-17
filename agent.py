@@ -6,14 +6,19 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 from math import exp
 
-LEARNING_RATE_DECAY = 0.95
-EPSILON_DECAY = 0.98
+LEARNING_RATE_DECAY = 1
+EPSILON_DECAY = 0.9999
 GAMMA = 0.50
 
 #weights
 GAMEOVER_PENALTY = -100
-SCORE_WEIGHT = 1
+SCORE_WEIGHT = 10
 HOLE_WEIGHT = -50
+
+def convert_key(key):
+    state,action = key
+    return str(state) + str(action)
+
 
 class Agent(object):
     def __init__(self, width = 10, height = 20, delay = 30, alpha = 0.6, epsilon = 0.8):
@@ -24,7 +29,26 @@ class Agent(object):
         self.epsilon = epsilon
         self.learning_no = 0
         self.qvalues = {}
+        self.q_val_history = {}
         self.results = []
+
+    #run the game until lose, then return score at the end.
+    def play(self):
+        self.query_count = 0
+        self.query_hit = 0
+        tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
+        while True:
+            tetris.next_turn()
+            nextAction = self.getAction(tetris, 0) #run with epsilon = 0 for most greedy 
+            try:
+                tetris.drop(nextAction)
+            except GameOverError:
+                self.results.append((tetris.score, 100* tetris.turn))
+                return (tetris.score, tetris.turn)
+            # print ""
+            # print tetris.shape_list[tetris.turn]
+            # print tetris
+            # print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
 
     # Q value learning function
     def learn(self, debug = False):
@@ -36,9 +60,11 @@ class Agent(object):
         self.learning_no += 1
         while True:
             tetris.next_turn()
+            # print "-=-=-= NEW MOVE =-=-=-"
             # print tetris.shape_list[tetris.turn]
             # print tetris
             nextAction = self.getAction(tetris, epsilon)
+            # print "-=-=-= NEXT ACTION {} =-=-=-".format(nextAction)
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
             alpha *= LEARNING_RATE_DECAY
@@ -49,7 +75,10 @@ class Agent(object):
                 #pre_state.to_config
                 tetris.drop(nextAction)
                 state_prime = State(tetris, tetris.shape_lookahead().type)
-                actions_prime = [action for (state,action) in self.getSuccessor(tetris)]
+                # print str(state_prime)
+                # for (state,action) in self.getSuccessor(tetris, get_future_shape = True):
+                #     print str(state)
+                actions_prime = [action for (state,action) in self.getSuccessor(tetris, get_future_shape = True)]
                 if delay_turn > 0:
                     reward = self.reward(delay_turn, tetris, False) #reward takes in the old turn number to calculate change
                     self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
@@ -68,24 +97,23 @@ class Agent(object):
                 self.results.append(tetris.score)
                 break
 
-            # if(debug):
-            #     print ""
-            #     print tetris.shape_list[tetris.turn]
-            #     print tetris
-            #     print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
+            if(debug):
+                print ""
+                print tetris.shape_list[tetris.turn]
+                print tetris
+                print "Score: {}, Number of holes {}".format(tetris.score,tetris.num_holes)
 
 
     #Heuristic Q value formula: -(change in bumpiness) +(score increase) -(Hole increase) +(shape fit)
     #Flat negative value if it's a game over
     def heuristic_q_val(self, state_action_pair):
-        GAMEOVER_HEURISTIC_VAL = -1000
-        SCORE_WEIGHT = 1
-        HOLE_WEIGHT = -1500
-        FIT_WEIGHT = 10
-        BUMPINESS_WEIGHT = -0.05
+        self.SCORE_WEIGHT = 10
+        self.HOLE_WEIGHT = -20
+        self.FIT_WEIGHT = 100
+        self.BUMPINESS_WEIGHT = -0.5
 
         (pre_state, action) = state_action_pair
-        #print "-----QUERY ON-- {}, {}".format(pre_state, action)
+        # print "-----QUERY ON-- {}, {}".format(pre_state, action)
         fall_col = action.x
         fall_rot = action.rotation
         shape_to_fall = Shape(pre_state.nextShapeType)
@@ -98,9 +126,11 @@ class Agent(object):
             pre_config.fall(shape_to_fall, fall_col) 
             holes_generated = pre_config.hole()
         except GameOverError: 
-            return GAMEOVER_HEURISTIC_VAL #Gives a Flat number Q value if the move fails
+            raise InvalidMoveError #this should not happen in practice, because we are querying on moves that aren't gameover.
+            # return GAMEOVER_HEURISTIC_VAL #Gives a Flat number Q value if the move fails
         except InvalidMoveError:
-            return -1*float('inf')
+            raise InvalidMoveError #this should not happen in practice, since we are always querying on valid moves
+            #return -1*float('inf')
         post_config = pre_config.copy() #This is the state after executing the fall but before clearing
         score_increase = pre_config.scoring(pre_config.clear())
         post_config_flat = State(pre_config, 0).to_config() #This is the "flattened" version of post_config where lines are cleared and holes are removed (ie. converted to an activelayer, then back)
@@ -111,8 +141,8 @@ class Agent(object):
         bumpiness_change = post_config_flat.bumpiness()-pre_config_save.bumpiness()
 
         raw_vals = [holes_generated, score_increase, num_contact, bumpiness_change]
-        weights = [HOLE_WEIGHT, SCORE_WEIGHT, FIT_WEIGHT, BUMPINESS_WEIGHT]
-        weighted_heuristic =  sum([x*y for x,y in zip(raw_vals,weights)])
+        weights = [self.HOLE_WEIGHT, self.SCORE_WEIGHT, self.FIT_WEIGHT, self.BUMPINESS_WEIGHT]
+        weighted_heuristic =  sum([x*y for x,y in zip(raw_vals,weights)]) #dot product of weights and heuristic values.
         # print "pre"
         # print str(pre_config_save)
         # print "post"
@@ -121,14 +151,15 @@ class Agent(object):
         return weighted_heuristic
 
 
-
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
         self.query_count += 1
-        if key not in self.qvalues:
-            self.qvalues[key] = self.heuristic_q_val(key)
-        val = self.qvalues[key]
-        self.query_hit = (self.query_hit + 1 ) if val != 0.0 else (self.query_hit)
+        if convert_key(key) not in self.qvalues:
+            self.qvalues[convert_key(key)] = self.heuristic_q_val(key)
+            self.q_val_history[convert_key(key)] = [self.qvalues[convert_key(key)]]
+
+        val = self.qvalues[convert_key(key)]
+        self.query_hit = (self.query_hit + 1 ) if len(self.q_val_history[convert_key(key)]) > 1 else (self.query_hit)
         return val
 
     # update Q-value based on alpha
@@ -136,15 +167,18 @@ class Agent(object):
         next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
 
 
-        #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative
-        #and even one of the q-vals is uninitialized. If we only query initialized q-vals or use a heuristic-initialized Q-vals and more learning, this would not be needed.
-        filtered_next = filter(lambda x : x != 0, next_qvals)
-        max_next = max(filtered_next) if (len(filtered_next) > 0) else 0
+        # #here's the janky part based on the fact that the max would become zero if all the initialized successor q-values are negative
+        # #and even one of the q-vals is uninitialized. If we only query initialized q-vals or use a heuristic-initialized Q-vals and more learning, this would not be needed.
+        # filtered_next = filter(lambda x : x != 0, next_qvals)
+        # max_next = max(filtered_next) if (len(filtered_next) > 0) else 0
+        max_next = GAMEOVER_PENALTY if (len(next_qvals) == 0) else max(next_qvals)
 
-        self.qvalues[key] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
+        self.qvalues[convert_key(key)] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
+        self.q_val_history[convert_key(key)].append(self.qvalues[convert_key(key)])
 
-    def getSuccessor(self, tetris):
-        nextShape = tetris.shape_list[tetris.turn]
+    #get_future_shape == True fetches the next shape rather than the current one.
+    def getSuccessor(self, tetris, get_future_shape=False):
+        nextShape = tetris.shape_lookahead() if get_future_shape else tetris.shape_list[tetris.turn] 
         successor_list = []
         for i in range(4):
             nextShape.rotate()
@@ -157,7 +191,7 @@ class Agent(object):
                 try:
                     newConfig.fall(nextShape, x)
                     # def of successor = (action, (active layer, height of baseline))
-                    successor_list.append((State(old_config, nextShape.type), (Action(x, nextShape.rotation))))
+                    successor_list.append((State(old_config, nextShape.type), (Action(x, nextShape.rotation))))    
                 except (InvalidMoveError, GameOverError):
                     pass
         # if successor_list is empty, meaning gameover in the next turn
@@ -203,14 +237,14 @@ class Agent(object):
 
     # plotting the learning result
     def plotresults(self, additional_plt):
-        mean_sum = []
-        sumsofar = 0
-        for i, score in enumerate(self.results):
-            sumsofar += score
-            mean_sum.append(sumsofar / float((i + 1)))
+        # mean_sum = []
+        # sumsofar = 0
+        # for i, score in enumerate(self.results):
+        #     sumsofar += score
+        #     mean_sum.append(sumsofar / float((i + 1)))
         import matplotlib.pyplot as plt
         plt.plot(self.results)
-        plt.plot(mean_sum)
+        # plt.plot(mean_sum)
         plt.plot(additional_plt)
         plt.show()
 
