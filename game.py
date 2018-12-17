@@ -333,7 +333,7 @@ class Action(object):
     def __str__(self):
         return str((self.x, self.rotation))
 
-# abstract state for agent usage
+# abstract state for agent usage - store config and the type of next shape
 class State(object):
     def __init__(self, config, shape_type):
         self.config = config
@@ -345,8 +345,6 @@ class State(object):
         elif type(self) != type(other):
             return False
         else:
-            #return self.active_layer == other.active_layer and self.base_zone == other.base_zone and self.nextShapeType == other.nextShapeType
             return self.config.grid == other.config.grid and self.nextShapeType == other.nextShapeType
     def __str__(self):
-        #return str((self.active_layer, self.base_zone, self.nextShapeType))
         return str((self.config.grid, self.nextShapeType))
