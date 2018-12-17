@@ -4,3 +4,4 @@ if __name__ == '__main__':
     stop = input("How many times do you want to learn?: ")
     for i in range(stop):
         agent.learn()
+    print agent.weight

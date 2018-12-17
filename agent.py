@@ -301,7 +301,10 @@ class ApproxQLearnAgent(object):
 
     # update Q-value based on alpha
     def weightUpdate(self, state, action, reward, alpha, next_state, actions_prime):
-        max_next_qvals = max([self.computeQvalue(next_state, a) for a in actions_prime])
+        if not actions_prime:
+            max_next_qvals = 0
+        else:
+            max_next_qvals = max([self.computeQvalue(next_state, a) for a in actions_prime])
         difference = reward + GAMMA * max_next_qvals - self.computeQvalue(state, action)
         self.weight[0] = self.weight[0] + alpha * difference * self.contact(state, action)
         self.weight[1] = self.weight[1] + alpha * difference * self.hole(state, action)
@@ -351,6 +354,7 @@ class ApproxQLearnAgent(object):
 
     # compute Q(s,a) on given s = state, a = action
     def computeQvalue(self, state, action):
+        print self.weight[0] * self.contact(state, action), self.weight[1] * self.hole(state, action), self.weight[2] * self.fill(state, action)
         return self.weight[0] * self.contact(state, action) + self.weight[1] * self.hole(state, action) + self.weight[2] * self.fill(state, action)
 
     # return reward on given game and turn you want to calculate the score increase
@@ -366,37 +370,47 @@ class ApproxQLearnAgent(object):
     """ features """
     # w[0] feature
     def contact(self, state, action):
-        preConfig, postConfig = self.transition(state, action)
-        cord_list = []
-        for ridx in range(postConfig.height):
-            for cidx in range(postConfig.width):
-                if postConfig.cell(ridx, cidx) - preConfig.cell(ridx, cidx) > 0:
-                    cord_list.append((ridx, cidx))
-        neighbor_list = []
-        for (r, c) in cord_list:
-            if not r - 1 < 0 and not (r - 1, c) in cord_list:
-                neighbor_list.append((r - 1, c))
-            if r + 1 < postConfig.height and not (r + 1, c) in cord_list:
-                neighbor_list.append((r + 1, c))
-            if not c - 1 < 0 and not (r, c - 1) in cord_list:
-                neighbor_list.append((r, c - 1))
-            if c + 1 < postConfig.width and not (r, c + 1) in cord_list:
-                neighbor_list.append((r, c + 1))
-        return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
+        try:
+            preConfig, postConfig = self.transition(state, action)
+            cord_list = []
+            for ridx in range(postConfig.height):
+                for cidx in range(postConfig.width):
+                    if postConfig.cell(ridx, cidx) - preConfig.cell(ridx, cidx) > 0:
+                        cord_list.append((ridx, cidx))
+            neighbor_list = []
+            for (r, c) in cord_list:
+                if not r - 1 < 0 and not (r - 1, c) in cord_list:
+                    neighbor_list.append((r - 1, c))
+                if r + 1 < postConfig.height and not (r + 1, c) in cord_list:
+                    neighbor_list.append((r + 1, c))
+                if not c - 1 < 0 and not (r, c - 1) in cord_list:
+                    neighbor_list.append((r, c - 1))
+                if c + 1 < postConfig.width and not (r, c + 1) in cord_list:
+                    neighbor_list.append((r, c + 1))
+            return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
+        except GameOverError:
+            return 0.
 
     # w[1] feature
     def hole(self, state, action):
-        preConfig, postConfig = self.transition(state, action)
-        return postConfig.hole() - preConfig.hole()
+        try:
+            preConfig, postConfig = self.transition(state, action)
+            return postConfig.hole() - preConfig.hole()
+        except GameOverError:
+            return 0.
+
 
     # w[2] feature
     def fill(self, state, action):
-        preConfig, postConfig = self.transition(state, action)
-        sum = 0.
-        for y in range(1, postConfig.height + 1):
-            add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
-            sum += self.negexp(y) * add
-        return sum
+        try:
+            preConfig, postConfig = self.transition(state, action)
+            sum = 0.
+            for y in range(1, postConfig.height + 1):
+                add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
+                sum += self.negexp(y) * add
+            return sum
+        except GameOverError:
+            return 0.
 
     """ utilities """
 
@@ -410,7 +424,5 @@ class ApproxQLearnAgent(object):
             fallShape.rotate()
         postConfig = Configuration(state.config.width, state.config.height)
         postConfig.copyGrid(preConfig)
-        print postConfig
-        print fallShape, action.x
         postConfig.fall(fallShape, action.x)
         return preConfig, postConfig
