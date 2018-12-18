@@ -33,7 +33,7 @@ class Agent(object):
         self.HHOLE_WEIGHT = -20
         self.HFIT_WEIGHT = 100
         self.HBUMPINESS_WEIGHT = -0.5
-        
+
         self.width = width
         self.height = height
         self.delay = delay
@@ -95,6 +95,7 @@ class Agent(object):
                 actions_prime = [action for (state,action) in self.getSuccessor(tetris, get_future_shape = True)]
                 if delay_turn > 0:
                     reward = self.reward(delay_turn, self.delay, tetris, False) #reward takes in the old turn number to calculate change
+                    reward = reward / float(self.delay) #Need to weight the reward by the delay to measure the AVERAGE reward over the window.
                     self.qvalueUpdate(tetris.history[delay_turn][0], reward, alpha, state_prime, actions_prime) #...and we then use it to update the old turn
                 if prev_turn > 0:
                     reward = self.reward(prev_turn, 1, tetris, False)
@@ -162,7 +163,9 @@ class Agent(object):
         # print str(post_config)
         # print "Holes {};Score {};Contact {};Bumpiness {};Heuristic {}".format(holes_generated, score_increase, num_contact, bumpiness_change, weighted_heuristic)
         #return 0
-        return weighted_heuristic
+
+        return weighted_heuristic*52.44955354-116.3895054
+
 
 
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
