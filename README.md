@@ -1,5 +1,5 @@
 # Vanilla Agent 
-Please refer to Sections 2.1, 2.1 and 2.3 in the paper Obstacles in Abstracting and Learning Tetris
+Please refer to Sections 2.4 in the paper Obstacles in Abstracting and Learning Tetris
 
 ## Getting Started
 ```
@@ -16,8 +16,4 @@ Then, it'll show a dump of the Q-value table. The following is the format of the
 
 ## Try These
 
-Every parameter that needs to be tweaked can be modified in test.py. 
-The parameters of EPSILON, LEARNING_RATE, SCORE_WEIGHT, GAMEOVER_PENALTY, HOLE_WEIGHT, LIVING_REWARD and DELAY can all be changed to your liking.
-
-Try setting GAMEOVER_PENALTY to a really high value like +100000. Observe the gameplay afterwards; you will see a rather suicidal agent
-Try setting different values for HOLE_WEIGHT, both positive and negative, and see how it impacts the number of holes created.
+Play around with different levels of the exploration eagerness and observe the hit rates. You will see that with the exploration function, the hit rate is only around 50% and even less for higher values of eagerness. It would be interesting to dump the q-values and run various statistics on the q-values to determine precisely why this is happening.

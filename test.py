@@ -10,7 +10,7 @@ def moving_average(in_list, window_size=200):
     return ret 
 
 
-EPSILON = 0.1             #Epsilon used in Greedy-epsilon
+EAGERNESS = 500           #How eager we want to be when exploring using our exploration function. Higher = more willing to explore the unknown
 LEARNING_RATE = (.33,500) #(n,k) where alpha = (k*n)/(n+iter). First parameter controls initial alpha, second is rate of decay (lower is faster)
 SCORE_WEIGHT = 1          #In most cases, set this to 1. In determining rewards, how are scores weighed relative to GAMEOVER_PENALTY, HOLE_WEIGHT and LIVING_REWARD?
 GAMEOVER_PENALTY = -100   #Reward for a Q-State that results in no successor states (ie. game over) Set this to a positive value like +10000 for a suicidal agent
@@ -22,7 +22,7 @@ DELAY = 1                 #In the "rolling window" reward model, setting the val
 if __name__ == '__main__':
     stop = input("How many times do you want to learn? (Recommended: 10,000): ")
 
-    agent = Agent(width = 5, height = 10, delay = DELAY, learning_rate = LEARNING_RATE, epsilon = EPSILON, \
+    agent = Agent(width = 4, height = 6, delay = DELAY, learning_rate = LEARNING_RATE, exploration_eagerness = EAGERNESS, \
         gameover_penalty = GAMEOVER_PENALTY, score_weight = SCORE_WEIGHT, hole_weight = HOLE_WEIGHT, living_reward = LIVING_REWARD)
     query_hit_rate = []
     

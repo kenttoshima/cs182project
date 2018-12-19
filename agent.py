@@ -6,7 +6,6 @@ from game import Tetris, Configuration, Action, State, InvalidMoveError, GameOve
 from random import random, choice
 from math import exp
 
-EPSILON_DECAY = 0.999
 GAMMA = 0.9
 
 def convert_key(key):
@@ -14,13 +13,13 @@ def convert_key(key):
     return str(state) + '|' + str(action)
 
 class Agent(object):
-    def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), epsilon = 0.8, \
+    def __init__(self, width = 10, height = 20, delay = 30, learning_rate = (.25,5000), exploration_eagerness = 500, \
         gameover_penalty = 0, score_weight = 1, hole_weight = -50, living_reward = 0):
         self.width = width
         self.height = height
         self.delay = delay
         self.learning_rate = learning_rate #For any given iteration of learning, alpha = (learning_rate[0]*learning_rate[1])/(learning_rate[1] + iter)
-        self.epsilon = epsilon
+        self.exploration_eagerness = exploration_eagerness
         self.gameover_penalty = gameover_penalty
         self.score_weight = score_weight
         self.hole_weight = hole_weight
@@ -56,11 +55,10 @@ class Agent(object):
         self.query_hit = 0
         self.learning_no += 1
         alpha = (self.learning_rate[0]*self.learning_rate[1])/(self.learning_rate[1] + self.learning_no)
-        self.epsilon *= EPSILON_DECAY
         tetris = Tetris(self.width, self.height, infinite=True, type_list=[])
         while True:
             tetris.next_turn()
-            nextAction = self.getAction(tetris, self.epsilon)
+            nextAction = self.getAction(tetris, epsilon = 0) #Since we are already using an exploration function, there is no longer need to randomize exploration
             prev_turn = tetris.turn - 1
             delay_turn = tetris.turn - self.delay
             try:
@@ -83,7 +81,7 @@ class Agent(object):
                 break
 
     def heuristic_q_val(self, state_action_pair):
-        return 0 #disable heuristics in this vanilla version of the Q-learning agent and instead initialize all Q-vals to 0
+        return 0 #disable heuristics in this version of the Q-learning agent and instead initialize all Q-vals to 0
 
     # either returns the q-value on given key or initialize query for that key if it hasn't been initialized
     def query(self, key):
@@ -99,7 +97,7 @@ class Agent(object):
 
     # update Q-value based on alpha
     def qvalueUpdate(self, key, updateValue, alpha, next_state, actions_prime):
-        next_qvals = [self.query( (next_state, a) ) for a in actions_prime]
+        next_qvals = [self.exploration_function(self.query((next_state, a)), self.num_hits((next_state, a)) )for a in actions_prime]
         max_next = self.gameover_penalty if (len(next_qvals) == 0) else max(next_qvals)
 
         self.qvalues[convert_key(key)] = (1 - alpha) * self.query(key) + alpha * (updateValue + GAMMA * max_next)
@@ -167,6 +165,15 @@ class Agent(object):
         return max(valueList, key = lambda x : x[0])[1]
 
 
+    def num_hits(self, key):
+        if convert_key(key) not in self.q_val_history:
+            return 1
+        else:
+            return len(self.q_val_history[convert_key(key)])
+
+    #adds a particular bonus to a q-value for being unexplored
+    def exploration_function(self, q, n): 
+        return q + float(self.exploration_eagerness)/float(n)
 
 # possible heuristics
 
