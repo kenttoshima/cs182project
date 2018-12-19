@@ -22,7 +22,7 @@ DELAY = 1                 #In the "rolling window" reward model, setting the val
 if __name__ == '__main__':
     stop = input("How many times do you want to learn? (Recommended: 10,000): ")
 
-    agent = Agent(width = 5, height = 10, delay = DELAY, learning_rate = LEARNING_RATE, epsilon = EPSILON, \
+    agent = Agent(width = 4, height = 6, delay = DELAY, learning_rate = LEARNING_RATE, epsilon = EPSILON, \
         gameover_penalty = GAMEOVER_PENALTY, score_weight = SCORE_WEIGHT, hole_weight = HOLE_WEIGHT, living_reward = LIVING_REWARD)
     query_hit_rate = []
     
