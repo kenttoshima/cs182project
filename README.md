@@ -11,7 +11,7 @@ At the end, it'll show a plot with scores in blue and Q-value hit rates in green
 Then, it'll show a dump of the Q-value table. The following is the format of the table:
 
 ```
-([State space], Next piece)|(column, rotation)   <Q-Value>
+([Active Layer], Next piece)|(column, rotation)   <Q-Value>
 ```
 
 ## Try These
