@@ -11,7 +11,7 @@ EPSILON_DECAY = 0.98
 GAMMA = 0.50
 
 #weights
-GAMEOVER_PENALTY = -100
+GAMEOVER_PENALTY = -1000
 SCORE_WEIGHT = 1
 HOLE_WEIGHT = -50
 
@@ -258,7 +258,10 @@ class ApproxQLearnAgent(object):
         self.epsilon = epsilon
         self.learning_no = 0
         self.results = []
-        self.weight = [1., -2., 1000.]
+        self.weight_0 = []
+        self.weight_1 = []
+        # self.weight_2 = []
+        self.weight = [1., -100.]
 
     def learn(self, debug = False):
         self.query_count = 0
@@ -291,25 +294,25 @@ class ApproxQLearnAgent(object):
                     if tetris.turn - turn_offset > 0:
                         reward = self.reward(tetris.turn - turn_offset, tetris, True)
                         self.weightUpdate(pre_state, nextAction, reward, alpha, state_prime, actions_prime)
-                print ""
-                print str(self.learning_no) + "th learning"
-                print tetris
-                print "Game Over at " + str(tetris.turn) + "th turn with score " + str(tetris.score)
-
                 self.results.append(tetris.score)
                 break
 
     # update Q-value based on alpha
-    def weightUpdate(self, state, action, reward, alpha, next_state, actions_prime):
-        if not actions_prime:
+    def weightUpdate(self, state, action, reward, alpha, next_state, next_actions):
+        # print "pre:{}".format(self.weight)
+        self.weight_0.append(self.weight[0])
+        self.weight_1.append(self.weight[1])
+        # self.weight_2.append(self.weight[2])
+        if not next_actions:
             max_next_qvals = 0
         else:
-            max_next_qvals = max([self.computeQvalue(next_state, a) for a in actions_prime])
+            max_next_qvals = max([self.computeQvalue(next_state, a) for a in next_actions])
         difference = reward + GAMMA * max_next_qvals - self.computeQvalue(state, action)
+        # print "difference:{}".format(difference)
         self.weight[0] = self.weight[0] + alpha * difference * self.contact(state, action)
         self.weight[1] = self.weight[1] + alpha * difference * self.hole(state, action)
-        self.weight[2] = self.weight[2] + alpha * difference * self.fill(state, action)
-
+        # self.weight[2] = self.weight[2] + alpha * difference * self.fill(state, action)
+        # print "post:{}".format(self.weight)
     # return a list of successor of the game
     def getSuccessor(self, state):
         nextShape = Shape(state.nextShapeType)
@@ -354,8 +357,7 @@ class ApproxQLearnAgent(object):
 
     # compute Q(s,a) on given s = state, a = action
     def computeQvalue(self, state, action):
-        print self.weight[0] * self.contact(state, action), self.weight[1] * self.hole(state, action), self.weight[2] * self.fill(state, action)
-        return self.weight[0] * self.contact(state, action) + self.weight[1] * self.hole(state, action) + self.weight[2] * self.fill(state, action)
+        return self.weight[0] * self.contact(state, action) + self.weight[1] * self.hole(state, action) # + self.weight[2] * self.fill(state, action)
 
     # return reward on given game and turn you want to calculate the score increase
     # if isGameOver == True, then return gameover penalty
@@ -389,28 +391,29 @@ class ApproxQLearnAgent(object):
                     neighbor_list.append((r, c + 1))
             return len(filter(lambda (r, c) : postConfig.cell(r, c) != 0, neighbor_list))
         except GameOverError:
-            return 0.
+            return 0
 
     # w[1] feature
     def hole(self, state, action):
         try:
             preConfig, postConfig = self.transition(state, action)
+            print postConfig.hole() - preConfig.hole()
             return postConfig.hole() - preConfig.hole()
         except GameOverError:
             return 0.
 
 
     # w[2] feature
-    def fill(self, state, action):
-        try:
-            preConfig, postConfig = self.transition(state, action)
-            sum = 0.
-            for y in range(1, postConfig.height + 1):
-                add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
-                sum += self.negexp(y) * add
-            return sum
-        except GameOverError:
-            return 0.
+    # def fill(self, state, action):
+    #     try:
+    #         preConfig, postConfig = self.transition(state, action)
+    #         sum = 0.
+    #         for y in range(1, postConfig.height + 1):
+    #             add = self.negexp(postConfig.blank_by_row(y)) - self.negexp(preConfig.blank_by_row(y))
+    #             sum += self.negexp(y) * add
+    #         return sum
+    #     except GameOverError:
+    #         return 0.
 
     """ utilities """
 
@@ -425,4 +428,20 @@ class ApproxQLearnAgent(object):
         postConfig = Configuration(state.config.width, state.config.height)
         postConfig.copyGrid(preConfig)
         postConfig.fall(fallShape, action.x)
+        print preConfig
+        print postConfig
         return preConfig, postConfig
+
+    def plotresults(self):
+        mean_sum = []
+        sumsofar = 0
+        for i, score in enumerate(self.results):
+            sumsofar += score
+            mean_sum.append(sumsofar / float((i + 1)))
+        import matplotlib.pyplot as plt
+        plt.plot(self.results)
+        plt.plot(mean_sum)
+        # plt.plot(self.weight_0)
+        # plt.plot(self.weight_1)
+        # plt.plot(self.weight_2)
+        plt.show()
